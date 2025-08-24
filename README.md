@@ -26,6 +26,8 @@ women_safety/
 6. **Community Support** - Connect with other users and share experiences
 7. **Fake Call** - Simulate incoming calls to escape uncomfortable situations
 8. **Loud Siren** - Activate high-volume alarm to attract attention
+9. **Identity Verification** - Verify identity for full access to features
+10. **Profile Management** - Manage personal information and safety preferences
 
 ### Backend (Python Services)
 1. **Geolocation Engine** - Location tracking and mapping services
@@ -42,31 +44,19 @@ women_safety/
 - Expo
 - TypeScript
 - React Navigation (expo-router)
+- AsyncStorage for local data storage
 
 ### Backend
 - Python
-- Flask/FastAPI
+- Flask
+- MongoDB (via PyMongo)
 - spaCy (NLP)
 - Requests (HTTP library)
 - feedparser (RSS parsing)
+- bcrypt (password hashing)
+- PyJWT (JSON Web Tokens)
 
 ## Getting Started
-
-### Frontend
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npx expo start
-   ```
 
 ### Backend
 1. Navigate to the backend directory:
@@ -79,18 +69,187 @@ women_safety/
    pip install -r requirements.txt
    ```
 
-3. Run the services:
+3. Set up environment variables:
+   - Create a `.env` file in the backend directory
+   - Add your MongoDB credentials:
+     ```
+     MONGODB_USERNAME=your_username
+     MONGODB_PASSWORD=your_password
+     MONGODB_CLUSTER=your_cluster_url
+     MONGODB_DATABASE=your_database_name
+     SECRET_KEY=your_secret_key
+     ```
+
+4. Start the Flask server:
    ```bash
-   python main.py
+   python app.py
+   ```
+   The server will start on `http://0.0.0.0:5000` and will be accessible from other devices on the same network.
+
+### Frontend
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
    ```
 
-## Integration
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-The frontend has been enhanced with comprehensive UI designs from the `ui` folder, transforming the basic Expo app into a feature-rich safety application with a modern dark theme and intuitive interface.
+3. Update the API URL in `.env` file:
+   - Find your machine's IP address (run `ifconfig` or `ipconfig` in terminal)
+   - Update `EXPO_PUBLIC_API_URL` in `frontend/.env` with your machine's IP address:
+     ```
+     EXPO_PUBLIC_API_URL=http://YOUR_MACHINE_IP:5000
+     ```
 
-## Screenshots
+4. Start the development server:
+   ```bash
+   npx expo start
+   ```
 
-*(Add screenshots of the mobile app here)*
+## Authentication Flow
+
+The app implements a complete authentication flow:
+
+1. **Login**: Users can log in with email and password
+2. **Registration**: New users can create an account with personal and emergency contact information
+3. **Identity Verification**: Users must verify their identity with a selfie and Aadhar card
+4. **Session Management**: User sessions are managed with JWT tokens stored in AsyncStorage
+
+### Emergency Access
+The app provides emergency access for users who need immediate access without authentication. This grants limited access to core safety features.
+
+## Dynamic Features
+
+### Real-time Location Tracking
+- Live GPS tracking with accuracy indicators
+- Location sharing with trusted contacts
+- Safe route recommendations
+
+### Emergency SOS System
+- One-tap emergency alerts
+- Automatic location sharing
+- Multi-channel notifications (SMS, email, app notifications)
+
+### Trusted Contacts Management
+- Add and manage emergency contacts
+- Quick dial functionality
+- Relationship categorization
+
+### Incident Reporting
+- Document safety incidents with photos and location
+- Add detailed descriptions and tags
+- View incident history
+
+### Community Support
+- Share experiences and advice
+- Connect with other users
+- Access safety resources
+
+## Connection Troubleshooting
+
+If the frontend cannot connect to the backend, follow these steps:
+
+### 1. Verify Backend is Running
+Make sure the backend server is running:
+```bash
+cd backend
+python app.py
+```
+You should see output like:
+```
+Testing database connection...
+Database connection successful!
+Starting server on http://0.0.0.0:5000
+```
+
+### 2. Find Your Machine's IP Address
+On your computer (where the backend is running):
+
+**Windows:**
+```cmd
+ipconfig
+```
+
+**Mac/Linux:**
+```bash
+ifconfig
+# or
+ip addr show
+```
+
+Look for an IP address that starts with `192.168.x.x` or `10.x.x.x`.
+
+### 3. Update Frontend Configuration
+In the `frontend/.env` file, make sure the URL matches your machine's IP:
+```
+EXPO_PUBLIC_API_URL=http://YOUR_ACTUAL_IP:5000
+```
+
+For example:
+```
+EXPO_PUBLIC_API_URL=http://192.168.1.15:5000
+```
+
+### 4. Test the Connection
+You can test if the backend is accessible by opening this URL in your browser:
+```
+http://YOUR_MACHINE_IP:5000/api/test
+```
+
+You should see a response like:
+```json
+{
+  "message": "API is accessible",
+  "status": "success"
+}
+```
+
+### 5. Same Network Requirement
+Make sure both your computer (backend) and mobile device (frontend) are on the same WiFi network.
+
+### 6. Firewall Settings
+Ensure your computer's firewall allows connections on port 5000.
+
+### 7. Common Issues and Solutions
+
+**Issue: "Network request failed"**
+- Solution: Check that both devices are on the same network and the IP address is correct
+
+**Issue: Backend starts but connection fails**
+- Solution: Make sure the backend is binding to `0.0.0.0` not `127.0.0.1`
+
+**Issue: Can't find the correct IP**
+- Solution: Try common IP ranges like:
+  - `192.168.1.x`
+  - `192.168.0.x`
+  - `10.0.0.x`
+
+### 8. Advanced Debugging
+
+You can run the connection test utility in the frontend to diagnose issues:
+
+1. Open the developer menu in Expo (shake device or `Ctrl+M`/`Cmd+M`)
+2. Select "Debug Remote JS"
+3. Open the browser console to see detailed logs
+
+## Testing
+
+### Backend Testing
+Run the backend tests:
+```bash
+cd backend
+python test_backend.py
+```
+
+### Frontend Testing
+Run the frontend tests:
+```bash
+cd frontend
+npm test
+```
 
 ## Contributing
 

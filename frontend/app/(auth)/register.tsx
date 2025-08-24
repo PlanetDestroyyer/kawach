@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Platform } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { registerUser } from "../../utils/api";
+import { useAuth } from "../_layout";
 
 export default function RegisterScreen() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -17,19 +18,30 @@ export default function RegisterScreen() {
     emergencyContactPhone: "",
     emergencyContactRelation: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { setIsAuthenticated } = useAuth();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (error) setError(null);
   };
 
   const validateStep1 = () => {
-    if (!formData.name) {
+    if (!formData.name.trim()) {
       Alert.alert("Error", "Please enter your full name");
       return false;
     }
-    if (!formData.email) {
+    if (!formData.email.trim()) {
       Alert.alert("Error", "Please enter your email address");
+      return false;
+    }
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      Alert.alert("Error", "Please enter a valid email address");
       return false;
     }
     if (!formData.password) {
@@ -48,20 +60,26 @@ export default function RegisterScreen() {
   };
 
   const validateStep2 = () => {
-    if (!formData.aadharNumber) {
+    if (!formData.aadharNumber.trim()) {
       Alert.alert("Error", "Please enter your Aadhar card number");
       return false;
     }
-    if (formData.aadharNumber.replace(/\s/g, "").length !== 12) {
+    const cleanedAadhar = formData.aadharNumber.replace(/\s/g, "");
+    if (cleanedAadhar.length !== 12 || !/^\d{12}$/.test(cleanedAadhar)) {
       Alert.alert("Error", "Aadhar number must be 12 digits");
       return false;
     }
-    if (!formData.emergencyContactName) {
+    if (!formData.emergencyContactName.trim()) {
       Alert.alert("Error", "Please enter emergency contact name");
       return false;
     }
-    if (!formData.emergencyContactPhone) {
+    if (!formData.emergencyContactPhone.trim()) {
       Alert.alert("Error", "Please enter emergency contact phone");
+      return false;
+    }
+    // Simple phone validation (you might want to improve this)
+    if (formData.emergencyContactPhone.replace(/\D/g, "").length < 10) {
+      Alert.alert("Error", "Please enter a valid phone number");
       return false;
     }
     if (!formData.emergencyContactRelation) {
@@ -76,15 +94,17 @@ export default function RegisterScreen() {
       setCurrentStep(2);
     } else if (currentStep === 2 && validateStep2()) {
       // Complete registration by calling backend API
+      setLoading(true);
+      setError(null);
       try {
         const result = await registerUser({
-          name: formData.name,
-          email: formData.email,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
           password: formData.password,
           aadhar_number: formData.aadharNumber.replace(/\s/g, ""),
           emergency_contact: {
-            name: formData.emergencyContactName,
-            phone: formData.emergencyContactPhone,
+            name: formData.emergencyContactName.trim(),
+            phone: formData.emergencyContactPhone.trim(),
             relation: formData.emergencyContactRelation
           }
         });
@@ -93,6 +113,12 @@ export default function RegisterScreen() {
           // Store user data and token
           await AsyncStorage.setItem("userToken", result.data.token || "temp-token");
           await AsyncStorage.setItem("userProfile", JSON.stringify(result.data.user));
+          await AsyncStorage.setItem("isVerified", "false");
+          
+          // Update authentication state
+          setIsAuthenticated(true);
+          
+          setLoading(false);
           
           Alert.alert(
             "Registration Complete",
@@ -105,10 +131,16 @@ export default function RegisterScreen() {
             ]
           );
         } else {
-          Alert.alert("Error", result.data.message || "Registration failed");
+          setLoading(false);
+          const errorMessage = result.data.message || "Registration failed. Please try again.";
+          setError(errorMessage);
+          Alert.alert("Error", errorMessage);
         }
-      } catch (error) {
-        Alert.alert("Error", "Network error. Please try again.");
+      } catch (error: any) {
+        setLoading(false);
+        const errorMessage = error.message || "Network error. Please try again.";
+        setError(errorMessage);
+        Alert.alert("Error", errorMessage);
         console.error("Registration error:", error);
       }
     }
@@ -156,6 +188,14 @@ export default function RegisterScreen() {
             <View style={[styles.progressDot, currentStep >= 2 && styles.activeDot]} />
           </View>
         </View>
+
+        {/* Error Message */}
+        {error ? (
+          <View style={styles.errorContainer}>
+            <MaterialIcons name="error" size={20} color="#f44336" />
+            <Text style={styles.errorMessage}>{error}</Text>
+          </View>
+        ) : null}
 
         {/* Registration Form */}
         <View style={styles.formCard}>
@@ -307,23 +347,30 @@ export default function RegisterScreen() {
             <TouchableOpacity 
               style={[styles.navButton, styles.backButton]} 
               onPress={handleBack}
+              disabled={loading}
             >
               <MaterialIcons name="arrow-back" size={20} color="#e5e5e5" />
               <Text style={styles.navButtonText}>Back</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.navButton, styles.nextButton]} 
+              style={[styles.navButton, styles.nextButton, loading && styles.disabledButton]} 
               onPress={handleNext}
+              disabled={loading}
             >
               <Text style={styles.navButtonText}>
-                {currentStep === 2 ? "Complete Setup" : "Continue"}
+                {loading ? (currentStep === 2 ? "Completing Setup..." : "Loading...") : 
+                 (currentStep === 2 ? "Complete Setup" : "Continue")}
               </Text>
-              <MaterialIcons 
-                name={currentStep === 2 ? "check" : "arrow-forward"} 
-                size={20} 
-                color="#fff" 
-              />
+              {loading ? (
+                <MaterialIcons name="hourglass-empty" size={20} color="#fff" />
+              ) : (
+                <MaterialIcons 
+                  name={currentStep === 2 ? "check" : "arrow-forward"} 
+                  size={20} 
+                  color="#fff" 
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -331,7 +378,14 @@ export default function RegisterScreen() {
         {/* Emergency Access */}
         <TouchableOpacity 
           style={styles.emergencyButton} 
-          onPress={() => router.replace("/tabs")}
+          onPress={() => {
+            // Set temporary token for emergency access
+            AsyncStorage.setItem("userToken", "emergency-access");
+            AsyncStorage.setItem("userProfile", JSON.stringify({ name: "Emergency User", email: "emergency@example.com" }));
+            AsyncStorage.setItem("isVerified", "false");
+            setIsAuthenticated(true);
+            router.replace("/tabs");
+          }}
         >
           <MaterialIcons name="warning" size={20} color="#f44336" />
           <Text style={styles.emergencyButtonText}>Emergency Access (Skip Setup)</Text>

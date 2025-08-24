@@ -8,7 +8,9 @@ from db.verification import verify_user_image, get_verification_status
 
 # Create Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS for all routes with more permissive settings for mobile apps
+CORS(app, origins=["*"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+     allow_headers=["Content-Type", "Authorization"], supports_credentials=True)
 
 # Test database connection on startup
 print("Testing database connection...")
@@ -16,6 +18,21 @@ if test_connection():
     print("Database connection successful!")
 else:
     print("Database connection failed!")
+
+# Add a before request handler to log all requests
+@app.before_request
+def log_request_info():
+    print(f"Incoming request: {request.method} {request.url}")
+    print(f"Headers: {dict(request.headers)}")
+    if request.data:
+        print(f"Body: {request.data}")
+
+# Add an after request handler to log responses
+@app.after_request
+def log_response_info(response):
+    print(f"Response status: {response.status}")
+    print(f"Response headers: {dict(response.headers)}")
+    return response
 
 # Routes
 @app.route('/')
@@ -49,7 +66,17 @@ def health_check():
         "database": "connected" if test_connection() else "disconnected"
     })
 
+# Add a simple test endpoint
+@app.route('/api/test', methods=['GET'])
+def test_endpoint():
+    return jsonify({
+        "message": "API is accessible",
+        "status": "success"
+    })
+
 if __name__ == '__main__':
     # Get port from environment variable or default to 5000
     port = int(os.environ.get('PORT', 5000))
+    # Make sure the host is 0.0.0.0 to accept connections from other devices
+    print(f"Starting server on http://0.0.0.0:{port}")
     app.run(host='0.0.0.0', port=port, debug=True)

@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "../../utils/api";
+import { useAuth } from "../_layout";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setIsAuthenticated } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -27,8 +29,21 @@ export default function LoginScreen() {
         await AsyncStorage.setItem("userToken", result.data.token);
         await AsyncStorage.setItem("userProfile", JSON.stringify(result.data.user));
         
+        // Check if user is verified
+        const isVerified = result.data.user.is_verified || false;
+        await AsyncStorage.setItem("isVerified", isVerified.toString());
+        
+        // Update authentication state
+        setIsAuthenticated(true);
+        
         setLoading(false);
-        router.replace("/tabs");
+        
+        // Redirect based on verification status
+        if (isVerified) {
+          router.replace("/tabs");
+        } else {
+          router.replace("/(auth)/verify");
+        }
       } else {
         setLoading(false);
         Alert.alert("Error", result.data.message || "Login failed");
@@ -52,10 +67,23 @@ export default function LoginScreen() {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Continue", 
-          onPress: () => router.replace("/tabs") 
+          onPress: () => {
+            // Set temporary token for emergency access
+            AsyncStorage.setItem("userToken", "emergency-access");
+            AsyncStorage.setItem("userProfile", JSON.stringify({ name: "Emergency User", email: "emergency@example.com" }));
+            AsyncStorage.setItem("isVerified", "false");
+            setIsAuthenticated(true);
+            router.replace("/tabs");
+          }
         }
       ]
     );
+  };
+
+  // Demo credentials for testing
+  const useDemoCredentials = () => {
+    setEmail("demo@example.com");
+    setPassword("demopassword");
   };
 
   return (
@@ -115,6 +143,14 @@ export default function LoginScreen() {
               {loading ? "Signing In..." : "Sign In"}
             </Text>
             <MaterialIcons name="arrow-forward" size={20} color="#fff" style={styles.buttonIcon} />
+          </TouchableOpacity>
+
+          {/* Demo Credentials Button */}
+          <TouchableOpacity 
+            style={styles.demoButton}
+            onPress={useDemoCredentials}
+          >
+            <Text style={styles.demoButtonText}>Use Demo Credentials</Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>

@@ -1,18 +1,21 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { CameraView, Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { verifyUserImage } from "../../utils/api";
+import { useAuth } from "../_layout";
 
 export default function VerifyScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [cameraType, setCameraType] = useState<"front" | "back">("front");
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
+  const { setIsAuthenticated } = useAuth();
 
   React.useEffect(() => {
     (async () => {
@@ -49,10 +52,12 @@ export default function VerifyScreen() {
       return;
     }
 
+    setLoading(true);
     try {
       // Get user data from AsyncStorage
       const userProfileStr = await AsyncStorage.getItem("userProfile");
       if (!userProfileStr) {
+        setLoading(false);
         Alert.alert("Error", "User not found. Please log in again.");
         router.replace("/(auth)/login");
         return;
@@ -77,6 +82,12 @@ export default function VerifyScreen() {
         // Update verification status in AsyncStorage
         await AsyncStorage.setItem("isVerified", "true");
         
+        // Update user profile with verification status
+        const updatedUser = { ...userProfile, is_verified: true };
+        await AsyncStorage.setItem("userProfile", JSON.stringify(updatedUser));
+        
+        setLoading(false);
+        
         Alert.alert(
           "Verification Complete",
           "Your identity has been verified successfully!",
@@ -88,12 +99,28 @@ export default function VerifyScreen() {
           ]
         );
       } else {
+        setLoading(false);
         Alert.alert("Error", result.data.message || "Verification failed. Please try again.");
       }
     } catch (error) {
+      setLoading(false);
       Alert.alert("Error", "Network error. Please try again.");
       console.error("Verification error:", error);
     }
+  };
+
+  const skipVerification = () => {
+    Alert.alert(
+      "Skip Verification",
+      "Skipping verification will limit some features. You can complete verification later in your profile settings.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Skip", 
+          onPress: () => router.replace("/tabs") 
+        }
+      ]
+    );
   };
 
   if (hasPermission === null) {
@@ -112,12 +139,20 @@ export default function VerifyScreen() {
         <Text style={styles.message}>
           Please enable camera permission in your device settings to complete verification.
         </Text>
-        <TouchableOpacity 
-          style={styles.retryButton} 
-          onPress={() => router.replace("/(auth)/register")}
-        >
-          <Text style={styles.retryButtonText}>Go Back</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={[styles.retryButton, styles.secondaryButton]} 
+            onPress={() => router.replace("/(auth)/register")}
+          >
+            <Text style={styles.retryButtonText}>Go Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.retryButton, styles.primaryButton]} 
+            onPress={skipVerification}
+          >
+            <Text style={styles.retryButtonText}>Skip Verification</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -181,7 +216,7 @@ export default function VerifyScreen() {
             
             <TouchableOpacity 
               style={styles.controlButton}
-              onPress={() => router.replace("/(auth)/register")}
+              onPress={skipVerification}
             >
               <MaterialIcons name="close" size={24} color="#fff" />
             </TouchableOpacity>
@@ -204,17 +239,28 @@ export default function VerifyScreen() {
             <TouchableOpacity 
               style={[styles.previewButton, styles.retakeButton]}
               onPress={retakePicture}
+              disabled={loading}
             >
               <MaterialIcons name="replay" size={24} color="#e5e5e5" />
               <Text style={styles.previewButtonText}>Retake</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.previewButton, styles.verifyButton]}
+              style={[styles.previewButton, styles.verifyButton, loading && styles.disabledButton]}
               onPress={handleVerify}
+              disabled={loading}
             >
-              <MaterialIcons name="check" size={24} color="#fff" />
-              <Text style={styles.previewButtonText}>Verify</Text>
+              {loading ? (
+                <>
+                  <MaterialIcons name="hourglass-empty" size={24} color="#fff" />
+                  <Text style={styles.previewButtonText}>Verifying...</Text>
+                </>
+              ) : (
+                <>
+                  <MaterialIcons name="check" size={24} color="#fff" />
+                  <Text style={styles.previewButtonText}>Verify</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </>

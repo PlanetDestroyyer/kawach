@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [safetyPreferences, setSafetyPreferences] = useState({
     autoSOS: true,
     fakeCallTimer: false,
@@ -10,6 +14,29 @@ export default function ProfileScreen() {
   });
 
   const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const router = useRouter();
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const userProfileStr = await AsyncStorage.getItem("userProfile");
+      const isVerifiedStr = await AsyncStorage.getItem("isVerified");
+      
+      if (userProfileStr) {
+        const profile = JSON.parse(userProfileStr);
+        setUserProfile(profile);
+      }
+      
+      if (isVerifiedStr) {
+        setIsVerified(isVerifiedStr === "true");
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
 
   const toggleSafetyPreference = (key: keyof typeof safetyPreferences) => {
     setSafetyPreferences(prev => ({
@@ -33,6 +60,35 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("userToken");
+              await AsyncStorage.removeItem("userProfile");
+              await AsyncStorage.removeItem("isVerified");
+              router.replace("/(auth)/login");
+            } catch (error) {
+              console.error("Logout error:", error);
+              Alert.alert("Error", "Failed to logout. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleVerifyIdentity = () => {
+    router.push("/(auth)/verify");
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -41,8 +97,22 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <MaterialIcons name="account-circle" size={80} color="#2196F3" />
           </View>
-          <Text style={styles.profileName}>Sarah Johnson</Text>
-          <Text style={styles.profileId}>Emergency ID: SG-2024-001</Text>
+          <Text style={styles.profileName}>
+            {userProfile ? userProfile.name : "Loading..."}
+          </Text>
+          <Text style={styles.profileId}>
+            Emergency ID: {userProfile ? `SG-${userProfile._id?.substring(0, 8) || '00000000'}` : "Loading..."}
+          </Text>
+          <View style={styles.verificationStatus}>
+            <MaterialIcons 
+              name={isVerified ? "verified" : "warning"} 
+              size={16} 
+              color={isVerified ? "#4CAF50" : "#FF9800"} 
+            />
+            <Text style={[styles.verificationText, isVerified ? styles.verifiedText : styles.unverifiedText]}>
+              {isVerified ? "Identity Verified" : "Identity Not Verified"}
+            </Text>
+          </View>
           <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
             <MaterialIcons name="edit" size={16} color="#2196F3" />
             <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -58,23 +128,33 @@ export default function ProfileScreen() {
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>Sarah Johnson</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Blood Group</Text>
-              <Text style={styles.infoValue}>O+</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Emergency ID</Text>
-              <Text style={styles.infoValue}>SG-2024-001</Text>
+              <Text style={styles.infoValue}>
+                {userProfile ? userProfile.name : "Loading..."}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>sarah.johnson@example.com</Text>
+              <Text style={styles.infoValue}>
+                {userProfile ? userProfile.email : "Loading..."}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Aadhar Number</Text>
+              <Text style={styles.infoValue}>
+                {userProfile ? userProfile.aadhar_number : "Loading..."}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Emergency Contact</Text>
+              <Text style={styles.infoValue}>
+                {userProfile?.emergency_contact?.name || "Not set"}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Phone</Text>
-              <Text style={styles.infoValue}>+1 234-567-8901</Text>
+              <Text style={styles.infoValue}>
+                {userProfile?.emergency_contact?.phone || "Not set"}
+              </Text>
             </View>
           </View>
         </View>
@@ -127,6 +207,27 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Identity Verification */}
+        {!isVerified && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="verified-user" size={20} color="#FF9800" />
+              <Text style={styles.sectionTitle}>Identity Verification</Text>
+            </View>
+            <View style={styles.infoCard}>
+              <Text style={styles.verificationDescription}>
+                Verify your identity to unlock all features and emergency services.
+              </Text>
+              <TouchableOpacity 
+                style={styles.verifyButton}
+                onPress={handleVerifyIdentity}
+              >
+                <Text style={styles.verifyButtonText}>Verify Identity Now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Language Settings */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -166,6 +267,10 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.emergencyButton} onPress={handleEmergencyReset}>
               <MaterialIcons name="restart-alt" size={20} color="#f44336" />
               <Text style={styles.emergencyButtonText}>Reset Safety Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.emergencyButton, styles.logoutButton]} onPress={handleLogout}>
+              <MaterialIcons name="logout" size={20} color="#f44336" />
+              <Text style={styles.emergencyButtonText}>Logout</Text>
             </TouchableOpacity>
           </View>
         </View>

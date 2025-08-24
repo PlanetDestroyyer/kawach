@@ -2,10 +2,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Base URL for API calls
-const BASE_URL = "http://localhost:5000";
+// For mobile apps, localhost won't work, so we use environment variables or a default IP
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.137.109:5000"; // Change this to your machine's IP
 
-// Generic API call function
-export async function apiCall(endpoint: string, options: RequestInit = {}) {
+// Generic API call function with retry logic and better error handling
+export async function apiCall(endpoint: string, options: RequestInit = {}, retries = 3) {
   try {
     // Get user token from AsyncStorage
     const token = await AsyncStorage.getItem("userToken");
@@ -13,18 +14,51 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     // Set default headers
     const headers = {
       "Content-Type": "application/json",
+      "Accept": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
       ...options.headers,
     };
     
-    // Make the API call
+    // Log the request for debugging
+    console.log(`API Request: ${BASE_URL}${endpoint}`, {
+      method: options.method || "GET",
+      headers,
+      body: options.body
+    });
+    
+    // Make the API call with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
       headers,
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
+    
+    // Log the response for debugging
+    console.log(`API Response: ${response.status} ${response.statusText}`);
+    
     // Parse JSON response
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // Handle non-JSON responses
+      const text = await response.text();
+      data = { message: text || "Unexpected response format" };
+    }
+    
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
+      // Clear auth data and redirect to login
+      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("userProfile");
+      await AsyncStorage.removeItem("isVerified");
+      // We can't redirect from here, but we can indicate the need to re-authenticate
+    }
     
     // Return response data
     return {
@@ -32,12 +66,32 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
       status: response.status,
       data,
     };
-  } catch (error) {
+  } catch (error: any) {
+    console.error("API call error:", error);
+    
+    // Handle timeout
+    if (error.name === "AbortError") {
+      console.log("API call timed out");
+      return {
+        success: false,
+        status: 0,
+        data: { message: "Request timed out. Please check your connection." },
+        error,
+      };
+    }
+    
+    // Retry logic for network errors
+    if (retries > 0 && (error instanceof TypeError)) {
+      console.log(`Retrying API call... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+      return apiCall(endpoint, options, retries - 1);
+    }
+    
     // Handle network errors
     return {
       success: false,
       status: 0,
-      data: { message: "Network error. Please check your connection." },
+      data: { message: "Network error. Please check your connection and API URL configuration." },
       error,
     };
   }
@@ -72,6 +126,68 @@ export async function getVerificationStatus(userId: string) {
   return apiCall(`/api/verification-status/${userId}`);
 }
 
+// Emergency Services API functions
+export async function sendSOS(location: any, message: string) {
+  return apiCall("/api/emergency/sos", {
+    method: "POST",
+    body: JSON.stringify({ location, message }),
+  });
+}
+
+export async function sendLocationToContacts(location: any) {
+  return apiCall("/api/emergency/send-location", {
+    method: "POST",
+    body: JSON.stringify({ location }),
+  });
+}
+
+export async function getTrustedContacts() {
+  return apiCall("/api/contacts");
+}
+
+export async function updateTrustedContact(contactId: string, contactData: any) {
+  return apiCall(`/api/contacts/${contactId}`, {
+    method: "PUT",
+    body: JSON.stringify(contactData),
+  });
+}
+
+export async function deleteTrustedContact(contactId: string) {
+  return apiCall(`/api/contacts/${contactId}`, {
+    method: "DELETE",
+  });
+}
+
+// Incident Reporting API functions
+export async function reportIncident(incidentData: any) {
+  return apiCall("/api/incidents", {
+    method: "POST",
+    body: JSON.stringify(incidentData),
+  });
+}
+
+export async function getIncidentHistory() {
+  return apiCall("/api/incidents/history");
+}
+
+// Safety Tips API functions
+export async function getSafetyTips(category?: string) {
+  const endpoint = category ? `/api/tips?category=${category}` : "/api/tips";
+  return apiCall(endpoint);
+}
+
+// Community API functions
+export async function getCommunityPosts() {
+  return apiCall("/api/community/posts");
+}
+
+export async function createCommunityPost(postData: any) {
+  return apiCall("/api/community/posts", {
+    method: "POST",
+    body: JSON.stringify(postData),
+  });
+}
+
 // Check if user is authenticated
 export async function isAuthenticated() {
   try {
@@ -94,4 +210,14 @@ export async function logout() {
     console.error("Logout error:", e);
     return false;
   }
+}
+
+// Health check
+export async function healthCheck() {
+  return apiCall("/api/health");
+}
+
+// Test endpoint
+export async function testConnection() {
+  return apiCall("/api/test");
 }
