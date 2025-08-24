@@ -1,50 +1,79 @@
-# Welcome to your Expo app 👋
+# SafeGuard - Women Safety App (Frontend)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive women safety application with emergency features built with React Native and Expo.
 
-## Get started
+## Features
 
-1. Install dependencies
+1. **Emergency SOS** - Send immediate distress signals to contacts and authorities
+2. **Trusted Contacts** - Manage emergency contacts and quick dial options
+3. **Incident Reporting** - Document and report safety concerns with evidence
+4. **Safety Tips** - Learn self-defense and safety techniques
+5. **Location Tracking** - Share live location with trusted contacts
+6. **Community Support** - Connect with other users and share experiences
+7. **Fake Call** - Simulate incoming calls to escape uncomfortable situations
+8. **Loud Siren** - Activate high-volume alarm to attract attention
 
+## Screens
+
+- **Home** - Main dashboard with location tracking and quick access features
+- **Community** - Connect with other users, share safety tips and experiences
+- **SOS** - Emergency screen with primary SOS button and quick actions
+- **Services** - Access all safety services and features
+- **Profile** - Manage profile information and safety preferences
+
+## Technology Stack
+
+- React Native
+- Expo
+- TypeScript
+- React Navigation (expo-router)
+
+## Getting Started
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the development server:
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Run on iOS:
+   ```bash
+   npx expo run:ios
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+4. Run on Android:
+   ```bash
+   npx expo run:android
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Design Integration
 
-## Get a fresh project
+This frontend integrates designs from the UI folder, transforming Next.js components into React Native components while maintaining the same functionality and user experience.
 
-When you're ready, run:
+## Color Scheme
 
-```bash
-npm run reset-project
+The app uses a dark theme with the following color palette:
+- Background: #0f0f0f (deep dark)
+- Cards: #1a1a1a (darker card background)
+- Primary: #4a4458 (muted purple)
+- Secondary: #5a3d7a (darker purple)
+- Accent: #2d5aa0 (darker blue)
+- Destructive: #cc3333 (less bright red)
+- Text: #e5e5e5 (softer white)
+- Muted Text: #a0a0a0 (more muted text)
+
+## Folder Structure
+
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+app/
+  _layout.tsx     # Tab navigation layout
+  index.tsx       # Home screen
+  community.tsx   # Community features
+  sos.tsx         # Emergency SOS screen
+  service.tsx     # Safety services
+  profile.tsx     # User profile and settings
+```

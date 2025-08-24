@@ -10,17 +10,17 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#000",
-        tabBarInactiveTintColor: "#888",
+        tabBarActiveTintColor: "#e5e5e5",
+        tabBarInactiveTintColor: "#a0a0a0",
         tabBarStyle: {
-          backgroundColor: "#fff",
+          backgroundColor: "#1a1a1a",
           borderTopWidth: 1,
-          borderTopColor: "#eee",
+          borderTopColor: "#2a2a2a",
         },
         headerStyle: {
-          backgroundColor: "#fff",
+          backgroundColor: "#1a1a1a",
         },
-        headerTintColor: "#000",
+        headerTintColor: "#e5e5e5",
       }}
     >
       <Tabs.Screen
@@ -46,10 +46,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="sos"
+        options={{
+          title: "SOS",
+          tabBarLabel: "SOS",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="warning" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="service"
         options={{
-          title: "Service",
-          tabBarLabel: "Service",
+          title: "Services",
+          tabBarLabel: "Services",
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="build" color={color} size={size} />

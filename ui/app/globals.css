@@ -1,0 +1,273 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated color tokens for modern low-brightness futuristic theme */
+  --background: #0f0f0f; /* Deeper dark background */
+  --foreground: #e5e5e5; /* Softer white text */
+  --card: #1a1a1a; /* Darker card background */
+  --card-foreground: #e5e5e5; /* Softer text on cards */
+  --popover: #1a1a1a;
+  --popover-foreground: #e5e5e5;
+  --primary: #4a4458; /* More muted primary color */
+  --primary-foreground: #e5e5e5;
+  --secondary: #5a3d7a; /* Darker, less bright purple */
+  --secondary-foreground: #e5e5e5;
+  --muted: #2a2a2a; /* Darker muted color */
+  --muted-foreground: #a0a0a0; /* More muted text */
+  --accent: #2d5aa0; /* Darker, less bright blue */
+  --accent-foreground: #e5e5e5;
+  --destructive: #cc3333; /* Less bright red */
+  --destructive-foreground: #e5e5e5;
+  --border: #2a2a2a; /* Darker borders */
+  --input: #1a1a1a;
+  --ring: rgba(90, 61, 122, 0.3); /* Much more subtle ring */
+  --chart-1: #5a3d7a;
+  --chart-2: #2d5aa0;
+  --chart-3: #4a4458;
+  --chart-4: #3a3a3a;
+  --chart-5: #e5e5e5;
+  --radius: 0.75rem; /* Slightly more rounded for modern look */
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #e5e5e5;
+  --sidebar-primary: #4a4458;
+  --sidebar-primary-foreground: #e5e5e5;
+  --sidebar-accent: #5a3d7a;
+  --sidebar-accent-foreground: #e5e5e5;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: rgba(90, 61, 122, 0.3);
+}
+
+.dark {
+  --background: #0f0f0f;
+  --foreground: #e5e5e5;
+  --card: #1a1a1a;
+  --card-foreground: #e5e5e5;
+  --popover: #1a1a1a;
+  --popover-foreground: #e5e5e5;
+  --primary: #4a4458;
+  --primary-foreground: #e5e5e5;
+  --secondary: #5a3d7a;
+  --secondary-foreground: #e5e5e5;
+  --muted: #2a2a2a;
+  --muted-foreground: #a0a0a0;
+  --accent: #2d5aa0;
+  --accent-foreground: #e5e5e5;
+  --destructive: #cc3333;
+  --destructive-foreground: #e5e5e5;
+  --border: #2a2a2a;
+  --input: #1a1a1a;
+  --ring: rgba(90, 61, 122, 0.3);
+  --chart-1: #5a3d7a;
+  --chart-2: #2d5aa0;
+  --chart-3: #4a4458;
+  --chart-4: #3a3a3a;
+  --chart-5: #e5e5e5;
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #e5e5e5;
+  --sidebar-primary: #4a4458;
+  --sidebar-primary-foreground: #e5e5e5;
+  --sidebar-accent: #5a3d7a;
+  --sidebar-accent-foreground: #e5e5e5;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: rgba(90, 61, 122, 0.3);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Added custom glow effects for futuristic theme */
+@layer utilities {
+  .glow-purple {
+    box-shadow: 0 0 6px rgba(90, 61, 122, 0.2), 0 0 12px rgba(90, 61, 122, 0.1);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 6px rgba(45, 90, 160, 0.2), 0 0 12px rgba(45, 90, 160, 0.1);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 8px rgba(204, 51, 51, 0.3), 0 0 16px rgba(204, 51, 51, 0.15);
+  }
+
+  .pulse-glow {
+    animation: pulse-glow-modern 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-glow-modern {
+    from {
+      box-shadow: 0 0 8px rgba(204, 51, 51, 0.3), 0 0 16px rgba(204, 51, 51, 0.15);
+    }
+    to {
+      box-shadow: 0 0 12px rgba(204, 51, 51, 0.4), 0 0 24px rgba(204, 51, 51, 0.2);
+    }
+  }
+
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+  }
+
+  /* Refined glow effects for better readability and subtlety */
+  .glow-purple-subtle {
+    box-shadow: 0 0 8px rgba(138, 43, 226, 0.3), 0 0 16px rgba(138, 43, 226, 0.15);
+  }
+
+  .glow-blue-subtle {
+    box-shadow: 0 0 8px rgba(0, 191, 255, 0.3), 0 0 16px rgba(0, 191, 255, 0.15);
+  }
+
+  .glow-red-soft {
+    box-shadow: 0 0 12px rgba(255, 76, 76, 0.4), 0 0 24px rgba(255, 76, 76, 0.2);
+  }
+
+  .border-glow-purple {
+    border: 1px solid rgba(138, 43, 226, 0.4);
+    box-shadow: 0 0 6px rgba(138, 43, 226, 0.2);
+  }
+
+  .border-glow-blue {
+    border: 1px solid rgba(0, 191, 255, 0.4);
+    box-shadow: 0 0 6px rgba(0, 191, 255, 0.2);
+  }
+
+  .pulse-glow-soft {
+    animation: pulse-glow-soft 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-glow-soft {
+    from {
+      box-shadow: 0 0 12px rgba(255, 76, 76, 0.4), 0 0 24px rgba(255, 76, 76, 0.2);
+    }
+    to {
+      box-shadow: 0 0 16px rgba(255, 76, 76, 0.5), 0 0 32px rgba(255, 76, 76, 0.25);
+    }
+  }
+
+  .backdrop-blur-card {
+    backdrop-filter: blur(8px);
+    background: rgba(42, 42, 42, 0.8);
+  }
+
+  /* New ultra-subtle glow effects for modern low-brightness design */
+  .glow-purple-minimal {
+    box-shadow: 0 0 4px rgba(90, 61, 122, 0.15), 0 0 8px rgba(90, 61, 122, 0.08);
+  }
+
+  .glow-blue-minimal {
+    box-shadow: 0 0 4px rgba(45, 90, 160, 0.15), 0 0 8px rgba(45, 90, 160, 0.08);
+  }
+
+  .glow-red-minimal {
+    box-shadow: 0 0 6px rgba(204, 51, 51, 0.2), 0 0 12px rgba(204, 51, 51, 0.1);
+  }
+
+  .border-glow-purple-minimal {
+    border: 1px solid rgba(90, 61, 122, 0.25);
+    box-shadow: 0 0 3px rgba(90, 61, 122, 0.1);
+  }
+
+  .border-glow-blue-minimal {
+    border: 1px solid rgba(45, 90, 160, 0.25);
+    box-shadow: 0 0 3px rgba(45, 90, 160, 0.1);
+  }
+
+  .pulse-glow-minimal {
+    animation: pulse-glow-minimal 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-glow-minimal {
+    from {
+      box-shadow: 0 0 6px rgba(204, 51, 51, 0.2), 0 0 12px rgba(204, 51, 51, 0.1);
+    }
+    to {
+      box-shadow: 0 0 8px rgba(204, 51, 51, 0.25), 0 0 16px rgba(204, 51, 51, 0.12);
+    }
+  }
+
+  .backdrop-blur-card-modern {
+    backdrop-filter: blur(6px);
+    background: rgba(26, 26, 26, 0.85);
+    border: 1px solid rgba(42, 42, 42, 0.5);
+  }
+
+  /* Modern glass morphism effect */
+  .glass-card {
+    background: rgba(26, 26, 26, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(90, 61, 122, 0.1);
+  }
+
+  /* Subtle hover effects for modern interaction */
+  .hover-glow-minimal {
+    transition: all 0.3s ease;
+  }
+
+  .hover-glow-minimal:hover {
+    box-shadow: 0 0 8px rgba(90, 61, 122, 0.2), 0 0 16px rgba(90, 61, 122, 0.1);
+    transform: translateY(-1px);
+  }
+
+  /* Adding soft glow utilities for section dividers */
+  .glow-purple-soft {
+    box-shadow: 0 0 12px rgba(90, 61, 122, 0.3), 0 0 24px rgba(90, 61, 122, 0.15);
+  }
+
+  .glow-blue-soft {
+    box-shadow: 0 0 12px rgba(45, 90, 160, 0.3), 0 0 24px rgba(45, 90, 160, 0.15);
+  }
+
+  .glow-accent-soft {
+    box-shadow: 0 0 12px rgba(45, 90, 160, 0.25), 0 0 24px rgba(45, 90, 160, 0.12);
+  }
+
+  .glow-primary-soft {
+    box-shadow: 0 0 12px rgba(74, 68, 88, 0.3), 0 0 24px rgba(74, 68, 88, 0.15);
+  }
+}
