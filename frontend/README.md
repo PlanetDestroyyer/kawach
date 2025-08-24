@@ -1,79 +1,118 @@
-# SafeGuard - Women Safety App (Frontend)
-
-A comprehensive women safety application with emergency features built with React Native and Expo.
-
-## Features
-
-1. **Emergency SOS** - Send immediate distress signals to contacts and authorities
-2. **Trusted Contacts** - Manage emergency contacts and quick dial options
-3. **Incident Reporting** - Document and report safety concerns with evidence
-4. **Safety Tips** - Learn self-defense and safety techniques
-5. **Location Tracking** - Share live location with trusted contacts
-6. **Community Support** - Connect with other users and share experiences
-7. **Fake Call** - Simulate incoming calls to escape uncomfortable situations
-8. **Loud Siren** - Activate high-volume alarm to attract attention
-
-## Screens
-
-- **Home** - Main dashboard with location tracking and quick access features
-- **Community** - Connect with other users, share safety tips and experiences
-- **SOS** - Emergency screen with primary SOS button and quick actions
-- **Services** - Access all safety services and features
-- **Profile** - Manage profile information and safety preferences
-
-## Technology Stack
-
-- React Native
-- Expo
-- TypeScript
-- React Navigation (expo-router)
+# SafeGuard - Women Safety App
 
 ## Getting Started
 
-1. Install dependencies:
+### Prerequisites
+- Node.js (version 16 or higher)
+- Expo CLI
+- Android/iOS simulator or Expo Go app on your mobile device
+
+### Installation
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the development server:
-   ```bash
-   npx expo start
-   ```
+### Running the App
 
-3. Run on iOS:
-   ```bash
-   npx expo run:ios
-   ```
+#### For Development
+```bash
+npx expo start
+```
 
-4. Run on Android:
-   ```bash
-   npx expo run:android
-   ```
+This will start the development server and provide options to:
+- Open in Expo Go app (scan QR code)
+- Run on Android emulator (`a` key)
+- Run on iOS simulator (`i` key)
 
-## Design Integration
+#### For Web
+```bash
+npx expo start --web
+```
 
-This frontend integrates designs from the UI folder, transforming Next.js components into React Native components while maintaining the same functionality and user experience.
+## Authentication Flow
 
-## Color Scheme
+The app implements a complete authentication system:
 
-The app uses a dark theme with the following color palette:
-- Background: #0f0f0f (deep dark)
-- Cards: #1a1a1a (darker card background)
-- Primary: #4a4458 (muted purple)
-- Secondary: #5a3d7a (darker purple)
-- Accent: #2d5aa0 (darker blue)
-- Destructive: #cc3333 (less bright red)
-- Text: #e5e5e5 (softer white)
-- Muted Text: #a0a0a0 (more muted text)
+1. **Login Screen** - Existing users can sign in with email/password
+2. **Registration** - New users can create an account with:
+   - Personal information
+   - Aadhar card details
+   - Emergency contact information
+3. **Identity Verification** - Users verify their identity by taking a selfie with their Aadhar card
+4. **Protected Screens** - Main app features are only accessible to authenticated users
 
-## Folder Structure
+## Features
+
+- Emergency SOS system
+- Trusted contacts management
+- Location tracking and sharing
+- Incident reporting
+- Safety tips and self-defense techniques
+- Community features
+- Fake call and loud siren emergency tools
+
+## Project Structure
 
 ```
 app/
-  _layout.tsx     # Tab navigation layout
-  index.tsx       # Home screen
-  community.tsx   # Community features
-  sos.tsx         # Emergency SOS screen
-  service.tsx     # Safety services
-  profile.tsx     # User profile and settings
+├── (auth)/          # Authentication screens
+│   ├── login.tsx     # Login screen
+│   ├── register.tsx  # Registration screen
+│   ├── verify.tsx    # Identity verification screen
+│   └── _layout.tsx   # Auth layout
+├── tabs/             # Main app screens (protected)
+│   ├── index.tsx     # Home dashboard
+│   ├── community.tsx # Community features
+│   ├── sos.tsx       # Emergency SOS
+│   ├── service.tsx   # Services listing
+│   ├── profile.tsx   # User profile
+│   └── _layout.tsx   # Tab navigation layout
+├── _layout.tsx       # Root layout with auth protection
+└── ...
 ```
+
+## Backend Integration
+
+To connect with a backend, implement the following endpoints:
+
+1. `POST /login` - User authentication
+2. `POST /register` - User registration
+3. `POST /verify` - Identity verification
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Metro bundler errors**: Clear cache and restart
+   ```bash
+   npx expo start -c
+   ```
+
+2. **Android build issues**: Ensure Android Studio and emulator are properly configured
+
+3. **iOS build issues**: Ensure Xcode is installed (macOS only)
+
+### Dependencies
+
+The app uses the following key dependencies:
+- React Native
+- Expo
+- TypeScript
+- React Navigation (expo-router)
+- AsyncStorage for local storage
+- expo-camera for identity verification
+- MaterialIcons for UI icons
+
+## Development Notes
+
+- The app uses a dark theme with custom colors
+- All screens are responsive and work on mobile devices
+- Authentication state is managed with AsyncStorage
+- Camera permissions are handled gracefully

@@ -1,0 +1,267 @@
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Simulate API call to backend
+      // In a real app, you would make an actual API call here
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For demo, we'll simulate a successful login
+      const userData = {
+        id: "1",
+        name: "Demo User",
+        email: email,
+        emergencyContacts: [
+          { id: 1, name: "Mom", phone: "+1 234-567-8901", relation: "Mother" },
+          { id: 2, name: "Sarah", phone: "+1 234-567-8902", relation: "Best Friend" },
+        ]
+      };
+      
+      // Store user data and token
+      await AsyncStorage.setItem("userToken", "demo-token-12345");
+      await AsyncStorage.setItem("userProfile", JSON.stringify(userData));
+      
+      setLoading(false);
+      router.replace("/tabs");
+    } catch (error) {
+      setLoading(false);
+      Alert.alert("Error", "Login failed. Please try again.");
+    }
+  };
+
+  const handleRegisterRedirect = () => {
+    router.push("/(auth)/register");
+  };
+
+  const handleEmergencyAccess = () => {
+    Alert.alert(
+      "Emergency Access",
+      "This will grant limited access to the app without authentication. Some features may be restricted.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Continue", 
+          onPress: () => router.replace("/tabs") 
+        }
+      ]
+    );
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <MaterialIcons name="shield" size={48} color="#5a3d7a" />
+          </View>
+          <Text style={styles.title}>SAFE GUARD</Text>
+          <Text style={styles.subtitle}>Your Safety, Our Priority</Text>
+        </View>
+
+        {/* Login Form */}
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>Welcome Back</Text>
+          <Text style={styles.formSubtitle}>Sign in to your account</Text>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.inputContainer}>
+              <MaterialIcons name="email" size={20} color="#a0a0a0" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor="#a0a0a0"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.inputContainer}>
+              <MaterialIcons name="lock" size={20} color="#a0a0a0" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#a0a0a0"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.loginButton, loading && styles.disabledButton]} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.loginButtonText}>
+              {loading ? "Signing In..." : "Sign In"}
+            </Text>
+            <MaterialIcons name="arrow-forward" size={20} color="#fff" style={styles.buttonIcon} />
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={handleRegisterRedirect}>
+              <Text style={styles.linkText}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Emergency Access */}
+        <TouchableOpacity style={styles.emergencyButton} onPress={handleEmergencyAccess}>
+          <MaterialIcons name="warning" size={20} color="#f44336" />
+          <Text style={styles.emergencyButtonText}>Emergency Access (Skip Login)</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    backgroundColor: "#0f0f0f",
+    padding: 24,
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 48,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(90, 61, 122, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#e5e5e5",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#a0a0a0",
+  },
+  formCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+    marginBottom: 24,
+  },
+  formTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#e5e5e5",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  formSubtitle: {
+    fontSize: 16,
+    color: "#a0a0a0",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(26, 26, 26, 0.5)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  inputIcon: {
+    marginLeft: 16,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingRight: 16,
+    fontSize: 16,
+    color: "#e5e5e5",
+  },
+  loginButton: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#5a3d7a",
+    borderRadius: 12,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 8,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  footerText: {
+    color: "#a0a0a0",
+    marginRight: 8,
+  },
+  linkText: {
+    color: "#5a3d7a",
+    fontWeight: "600",
+  },
+  emergencyButton: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: "rgba(244, 67, 54, 0.3)",
+    borderRadius: 12,
+  },
+  emergencyButtonText: {
+    color: "#f44336",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+});
