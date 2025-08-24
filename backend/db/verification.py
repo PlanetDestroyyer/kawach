@@ -2,13 +2,14 @@ from flask import jsonify, request
 from .init import verification_records, customer_records
 import base64
 import datetime
+from bson import ObjectId
 
 def verify_user_image():
     """
     Handle user image verification
     Expected JSON input:
     {
-        "user_id": "user_id",
+        "user_id": "user_object_id",
         "image_data": "base64_encoded_image_data"
     }
     """
@@ -26,16 +27,9 @@ def verify_user_image():
         user_id = data['user_id']
         image_data = data['image_data']
         
-        # Validate user exists (mock implementation)
-        user_exists = False
-        user_index = None
-        for i, record in enumerate(customer_records):
-            if str(record.get('id')) == str(user_id):
-                user_exists = True
-                user_index = i
-                break
-        
-        if not user_exists:
+        # Validate user exists
+        user = customer_records.find_one({"_id": ObjectId(user_id)})
+        if not user:
             return jsonify({
                 "success": False,
                 "message": "User not found"
@@ -43,25 +37,31 @@ def verify_user_image():
         
         # Store verification record
         verification_record = {
-            "id": len(verification_records) + 1,
-            "user_id": user_id,
+            "user_id": ObjectId(user_id),
             "image_data": image_data,  # In production, you should encrypt this
-            "created_at": datetime.datetime.utcnow().isoformat(),
+            "created_at": datetime.datetime.utcnow(),
             "status": "pending"  # pending, approved, rejected
         }
         
-        verification_records.append(verification_record)
+        result = verification_records.insert_one(verification_record)
         
-        # Update user verification status
-        if user_index is not None:
-            customer_records[user_index]['is_verified'] = True
-            customer_records[user_index]['updated_at'] = datetime.datetime.utcnow().isoformat()
-        
-        return jsonify({
-            "success": True,
-            "message": "Image verification submitted successfully",
-            "verification_id": verification_record['id']
-        }), 200
+        if result.inserted_id:
+            # Update user verification status
+            customer_records.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"is_verified": True, "updated_at": datetime.datetime.utcnow()}}
+            )
+            
+            return jsonify({
+                "success": True,
+                "message": "Image verification submitted successfully",
+                "verification_id": str(result.inserted_id)
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Failed to submit verification"
+            }), 500
             
     except Exception as e:
         return jsonify({
@@ -74,18 +74,17 @@ def get_verification_status(user_id):
     Get verification status for a user
     """
     try:
-        # Find latest verification record for user (mock implementation)
-        latest_record = None
-        for record in verification_records:
-            if str(record.get('user_id')) == str(user_id):
-                if latest_record is None or record.get('created_at') > latest_record.get('created_at'):
-                    latest_record = record
+        # Find latest verification record for user
+        verification_record = verification_records.find_one(
+            {"user_id": ObjectId(user_id)},
+            sort=[("created_at", -1)]
+        )
         
-        if latest_record:
+        if verification_record:
             return jsonify({
                 "success": True,
-                "verification_status": latest_record.get("status", "pending"),
-                "submitted_at": latest_record.get("created_at")
+                "verification_status": verification_record.get("status", "pending"),
+                "submitted_at": verification_record.get("created_at")
             }), 200
         else:
             return jsonify({

@@ -3,6 +3,7 @@ from flask import jsonify, request
 import bcrypt
 from .init import customer_records
 import re
+from bson import ObjectId
 
 def register_user():
     """
@@ -34,7 +35,7 @@ def register_user():
                 }), 400
         
         # Validate email format
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, data['email']):
             return jsonify({
                 "success": False,
@@ -43,7 +44,7 @@ def register_user():
         
         # Validate Aadhar number (12 digits)
         aadhar = data['aadhar_number'].replace(' ', '')
-        if not re.match(r'^\d{12}, aadhar):
+        if not re.match(r'^\d{12}$', aadhar):
             return jsonify({
                 "success": False,
                 "message": "Aadhar number must be 12 digits"
@@ -65,26 +66,24 @@ def register_user():
                     "message": f"Emergency contact {field} is required"
                 }), 400
         
-        # Check if user already exists (mock implementation)
-        for record in customer_records:
-            if record.get('email') == data['email']:
-                return jsonify({
-                    "success": False,
-                    "message": "User with this email already exists"
-                }), 409
-                
-            if record.get('aadhar_number') == aadhar:
-                return jsonify({
-                    "success": False,
-                    "message": "User with this Aadhar number already exists"
-                }), 409
+        # Check if user already exists
+        if customer_records.find_one({"email": data['email']}):
+            return jsonify({
+                "success": False,
+                "message": "User with this email already exists"
+            }), 409
+            
+        if customer_records.find_one({"aadhar_number": aadhar}):
+            return jsonify({
+                "success": False,
+                "message": "User with this Aadhar number already exists"
+            }), 409
         
         # Hash password
         hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
         
         # Prepare user data
         user_data = {
-            "id": len(customer_records) + 1,  # Simple ID for mock
             "name": data['name'],
             "email": data['email'],
             "password": hashed_password,
@@ -95,21 +94,28 @@ def register_user():
                 "relation": emergency_contact['relation']
             },
             "is_verified": False,
-            "created_at": datetime.datetime.utcnow().isoformat(),
-            "updated_at": datetime.datetime.utcnow().isoformat()
+            "created_at": datetime.datetime.utcnow(),
+            "updated_at": datetime.datetime.utcnow()
         }
         
-        # Insert user into database (mock implementation)
-        customer_records.append(user_data)
+        # Insert user into database
+        result = customer_records.insert_one(user_data)
         
-        # Remove password from response
-        user_response = {key: value for key, value in user_data.items() if key != 'password'}
-        
-        return jsonify({
-            "success": True,
-            "message": "User registered successfully",
-            "user": user_response
-        }), 201
+        if result.inserted_id:
+            # Remove password from response
+            user_response = {key: value for key, value in user_data.items() if key != 'password'}
+            user_response['_id'] = str(result.inserted_id)
+            
+            return jsonify({
+                "success": True,
+                "message": "User registered successfully",
+                "user": user_response
+            }), 201
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Failed to register user"
+            }), 500
             
     except Exception as e:
         return jsonify({

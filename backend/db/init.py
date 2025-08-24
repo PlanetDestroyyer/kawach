@@ -1,29 +1,47 @@
-# Mock database implementation for testing
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 import os
 from dotenv import load_dotenv
+import urllib.parse
 
 # Load environment variables
 load_dotenv()
 
-# Mock collections (in-memory for testing)
-customer_records = []
-last_records = []
-lang_log_new_records = []
-poll_records = []
-news_records = []
-verification_records = []
+# Get MongoDB credentials from environment variables (more secure)
+username = os.getenv('MONGODB_USERNAME', 'iampranavnalawade')
+password = os.getenv('MONGODB_PASSWORD', 'Pranav%')
+cluster = os.getenv('MONGODB_CLUSTER', 'cluster0.4sxycqb.mongodb.net')
+database_name = os.getenv('MONGODB_DATABASE', 'kavach')
 
-# Mock database object
-class MockDB:
-    def get_database(self, name):
-        return self
+# Properly encode the password
+encoded_password = urllib.parse.quote_plus(password)
+# uri = f"mongodb+srv://{username}:{encoded_password}@{cluster}/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://pranav:womendb@cluster0.4sxycqb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
-db = MockDB()
+# Create MongoDB client
+client = MongoClient(uri, server_api=ServerApi('1'))
+
+# Get database
+db = client.get_database(database_name)
+
+# Collections
+customer_records = db.customer
+last_records = db.last
+lang_log_new_records = db.lang_log_new
+poll_records = db.poll
+news_records = db.news
+verification_records = db.verification  # New collection for image verification
 
 # Test connection
 def test_connection():
-    print("Using mock database for testing. No actual MongoDB connection.")
-    return True
+    try:
+        client.admin.command('ping')
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+        return True
+    except Exception as e:
+        print(f"Error connecting to MongoDB: {e}")
+        return False
 
 if __name__ == "__main__":
     test_connection()
+

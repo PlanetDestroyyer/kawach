@@ -5,6 +5,7 @@ import jwt
 import datetime
 import os
 from dotenv import load_dotenv
+from bson import ObjectId
 
 load_dotenv()
 
@@ -33,12 +34,8 @@ def login_user():
         email = data['email']
         password = data['password']
         
-        # Find user by email (mock implementation)
-        user = None
-        for record in customer_records:
-            if record.get('email') == email:
-                user = record
-                break
+        # Find user by email
+        user = customer_records.find_one({"email": email})
         
         if not user:
             return jsonify({
@@ -50,13 +47,14 @@ def login_user():
         if bcrypt.checkpw(password.encode('utf-8'), user['password']):
             # Generate JWT token
             token = jwt.encode({
-                'user_id': str(user.get('id', 'mock_id')),
+                'user_id': str(user['_id']),
                 'email': user['email'],
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
             }, SECRET_KEY, algorithm='HS256')
             
             # Remove password from user data
             user_data = {key: value for key, value in user.items() if key != 'password'}
+            user_data['_id'] = str(user_data['_id'])
             
             return jsonify({
                 "success": True,
