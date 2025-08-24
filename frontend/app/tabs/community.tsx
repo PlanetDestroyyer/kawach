@@ -1,146 +1,161 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { getSafetyPolls } from "../../utils/safety_poll_api";
 
 export default function CommunityScreen() {
-  const [posts] = useState([
-    {
-      id: 1,
-      user: "Safety Advocate",
-      time: "2 hours ago",
-      content: "Remember to trust your instincts. If something feels wrong, don't hesitate to seek help or leave the situation.",
-      likes: 24,
-      comments: 5,
-    },
-    {
-      id: 2,
-      user: "Empowerment Group",
-      time: "5 hours ago",
-      content: "Join our self-defense workshop this Saturday at 2 PM. Learn essential techniques to protect yourself.",
-      likes: 42,
-      comments: 8,
-    },
-    {
-      id: 3,
-      user: "Community Support",
-      time: "1 day ago",
-      content: "Local authorities have increased patrols in the downtown area following recent safety concerns. Stay alert and report anything suspicious.",
-      likes: 67,
-      comments: 12,
-    },
-  ]);
+  const [polls, setPolls] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
 
-  const handleJoinGroup = () => {
-    Alert.alert(
-      "Join Community",
-      "You've successfully joined the women's safety community group!",
-      [{ text: "OK" }]
-    );
+  useEffect(() => {
+    loadSafetyPolls();
+  }, []);
+
+  const loadSafetyPolls = async () => {
+    try {
+      setLoading(true);
+      const result = await getSafetyPolls();
+      
+      if (result.success) {
+        setPolls(result.data);
+      } else {
+        Alert.alert("Error", "Could not load safety reports");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Network error. Please try again.");
+      console.error("Error loading safety polls:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreatePost = () => {
-    Alert.alert(
-      "Create Post",
-      "This feature will allow you to share safety tips and experiences with the community.",
-      [{ text: "OK" }]
-    );
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadSafetyPolls();
+    setRefreshing(false);
+  };
+
+  const handleAddPoll = () => {
+    router.push("/tabs/safety_poll");
+  };
+
+  const getSafetyColor = (isSafe) => {
+    return isSafe ? "#4CAF50" : "#f44336";
+  };
+
+  const getSafetyIcon = (isSafe) => {
+    return isSafe ? "check-circle" : "error";
+  };
+
+  const getSafetyText = (isSafe) => {
+    return isSafe ? "Safe" : "Unsafe";
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <MaterialIcons name="people" size={32} color="#2196F3" />
-            <View style={styles.headerText}>
-              <Text style={styles.headerTitle}>Women's Safety Community</Text>
-              <Text style={styles.headerSubtitle}>Connect, share, and support each other</Text>
-            </View>
+            <MaterialIcons name="people" size={24} color="#2196F3" />
+            <Text style={styles.headerTitle}>Community Safety Reports</Text>
           </View>
+          <Text style={styles.headerSubtitle}>See what others are reporting in your area</Text>
         </View>
 
-        {/* Community Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>2,847</Text>
-            <Text style={styles.statLabel}>Members</Text>
+            <MaterialIcons name="warning" size={24} color="#f44336" />
+            <Text style={styles.statNumber}>24</Text>
+            <Text style={styles.statLabel}>Reports Today</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>1,204</Text>
-            <Text style={styles.statLabel}>Active Today</Text>
+            <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
+            <Text style={styles.statNumber}>87%</Text>
+            <Text style={styles.statLabel}>Areas Safe</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>89</Text>
-            <Text style={styles.statLabel}>Groups</Text>
+            <MaterialIcons name="people" size={24} color="#2196F3" />
+            <Text style={styles.statNumber}>142</Text>
+            <Text style={styles.statLabel}>Active Users</Text>
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleJoinGroup}>
-            <MaterialIcons name="group-add" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Join Group</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleCreatePost}>
-            <MaterialIcons name="edit" size={20} color="#2196F3" />
-            <Text style={styles.secondaryButtonText}>Create Post</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Safety Tips */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Safety Tips of the Day</Text>
+            <Text style={styles.sectionTitle}>Recent Safety Reports</Text>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddPoll}>
+              <MaterialIcons name="add" size={20} color="#fff" />
+            </TouchableOpacity>
           </View>
-          <View style={styles.tipCard}>
-            <View style={styles.tipIcon}>
-              <MaterialIcons name="lightbulb" size={24} color="#FFC107" />
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <MaterialIcons name="hourglass-empty" size={48} color="#a0a0a0" />
+              <Text style={styles.loadingText}>Loading safety reports...</Text>
             </View>
-            <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Stay Connected</Text>
-              <Text style={styles.tipText}>
-                Share your location with trusted contacts when going to new places, 
-                especially at night. Use our built-in location sharing feature.
-              </Text>
+          ) : polls.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="inbox" size={48} color="#a0a0a0" />
+              <Text style={styles.emptyText}>No safety reports yet</Text>
+              <Text style={styles.emptySubtext}>Be the first to report on your area's safety</Text>
+              <TouchableOpacity style={styles.addReportButton} onPress={handleAddPoll}>
+                <Text style={styles.addReportButtonText}>Add Safety Report</Text>
+              </TouchableOpacity>
             </View>
-          </View>
+          ) : (
+            polls.map((poll) => (
+              <View key={poll.id} style={styles.pollCard}>
+                <View style={styles.pollHeader}>
+                  <View style={styles.locationContainer}>
+                    <MaterialIcons name="location-on" size={16} color="#a0a0a0" />
+                    <Text style={styles.locationText}>{poll.location}</Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: getSafetyColor(poll.is_safe) }]}>
+                    <MaterialIcons name={getSafetyIcon(poll.is_safe)} size={16} color="#fff" />
+                    <Text style={styles.statusText}>{getSafetyText(poll.is_safe)}</Text>
+                  </View>
+                </View>
+                
+                <Text style={styles.commentText}>{poll.comment}</Text>
+                
+                <View style={styles.pollStats}>
+                  <View style={styles.statItem}>
+                    <MaterialIcons name="thumb-up" size={16} color="#4CAF50" />
+                    <Text style={styles.statValue}>{poll.safe_votes}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <MaterialIcons name="thumb-down" size={16} color="#f44336" />
+                    <Text style={styles.statValue}>{poll.unsafe_votes}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <MaterialIcons name="access-time" size={16} color="#a0a0a0" />
+                    <Text style={styles.statValue}>
+                      {new Date(poll.created_at).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
         </View>
 
-        {/* Community Posts */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Community Feed</Text>
+        <View style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <MaterialIcons name="info" size={20} color="#2196F3" />
+            <Text style={styles.infoTitle}>Community Safety</Text>
           </View>
-          
-          {posts.map((post) => (
-            <View key={post.id} style={styles.postCard}>
-              <View style={styles.postHeader}>
-                <View style={styles.userAvatar}>
-                  <MaterialIcons name="account-circle" size={32} color="#2196F3" />
-                </View>
-                <View style={styles.postUserInfo}>
-                  <Text style={styles.postUserName}>{post.user}</Text>
-                  <Text style={styles.postTime}>{post.time}</Text>
-                </View>
-              </View>
-              <Text style={styles.postContent}>{post.content}</Text>
-              <View style={styles.postActions}>
-                <TouchableOpacity style={styles.postActionButton}>
-                  <MaterialIcons name="thumb-up" size={16} color="#a0a0a0" />
-                  <Text style={styles.postActionText}>{post.likes}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.postActionButton}>
-                  <MaterialIcons name="comment" size={16} color="#a0a0a0" />
-                  <Text style={styles.postActionText}>{post.comments}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.postActionButton}>
-                  <MaterialIcons name="share" size={16} color="#a0a0a0" />
-                  <Text style={styles.postActionText}>Share</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+          <Text style={styles.infoText}>
+            These reports are submitted by community members to help identify safe and unsafe areas. 
+            The data is combined with crime reports and news to create a comprehensive safety picture.
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -151,36 +166,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0f0f0f",
+    paddingTop: 20, // Add top padding
   },
   scrollView: {
     flex: 1,
   },
   header: {
     backgroundColor: "#1a1a1a",
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#2a2a2a",
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  headerText: {
-    marginLeft: 16,
+    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#e5e5e5",
+    marginLeft: 12,
   },
   headerSubtitle: {
     fontSize: 14,
     color: "#a0a0a0",
-    marginTop: 4,
   },
   statsContainer: {
     flexDirection: "row",
-    padding: 16,
+    padding: 24,
     gap: 12,
   },
   statCard: {
@@ -193,137 +208,160 @@ const styles = StyleSheet.create({
     borderColor: "#2a2a2a",
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#2196F3",
+    color: "#e5e5e5",
+    marginVertical: 8,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#a0a0a0",
-    marginTop: 4,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    padding: 16,
-    gap: 12,
-  },
-  primaryButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#2196F3",
-    borderRadius: 8,
-    paddingVertical: 16,
-  },
-  secondaryButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1a1a1a",
-    borderRadius: 8,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: "#2a2a2a",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  secondaryButtonText: {
-    color: "#2196F3",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
   },
   section: {
     paddingHorizontal: 24,
     marginBottom: 24,
+    marginTop: 16, // Add top margin
   },
   sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#e5e5e5",
   },
-  tipCard: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#2a2a2a",
-    flexDirection: "row",
+  addButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#5a3d7a",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  tipIcon: {
-    marginRight: 16,
-  },
-  tipContent: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 48,
   },
-  tipTitle: {
+  loadingText: {
+    color: "#a0a0a0",
+    marginTop: 12,
     fontSize: 16,
-    fontWeight: "600",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: 48,
+  },
+  emptyText: {
     color: "#e5e5e5",
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 16,
     marginBottom: 8,
   },
-  tipText: {
-    fontSize: 14,
+  emptySubtext: {
     color: "#a0a0a0",
-    lineHeight: 20,
+    fontSize: 14,
+    marginBottom: 24,
+    textAlign: "center",
   },
-  postCard: {
+  addReportButton: {
+    backgroundColor: "#5a3d7a",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  addReportButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  pollCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: "#2a2a2a",
   },
-  postHeader: {
+  pollHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-  userAvatar: {
-    marginRight: 12,
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  postUserInfo: {
-    flex: 1,
-  },
-  postUserName: {
+  locationText: {
+    color: "#e5e5e5",
     fontSize: 16,
     fontWeight: "600",
-    color: "#e5e5e5",
+    marginLeft: 8,
   },
-  postTime: {
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: "#fff",
     fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
+  commentText: {
     color: "#a0a0a0",
-  },
-  postContent: {
     fontSize: 14,
-    color: "#e5e5e5",
-    lineHeight: 20,
     marginBottom: 16,
+    lineHeight: 20,
   },
-  postActions: {
+  pollStats: {
     flexDirection: "row",
     justifyContent: "space-between",
     borderTopWidth: 1,
     borderTopColor: "#2a2a2a",
     paddingTop: 12,
   },
-  postActionButton: {
+  statItem: {
     flexDirection: "row",
     alignItems: "center",
   },
-  postActionText: {
-    fontSize: 14,
-    color: "#a0a0a0",
+  statValue: {
+    color: "#e5e5e5",
+    fontSize: 12,
     marginLeft: 4,
+  },
+  infoCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  infoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  infoTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#e5e5e5",
+    marginLeft: 12,
+  },
+  infoText: {
+    fontSize: 16,
+    color: "#a0a0a0",
+    lineHeight: 24,
   },
 });

@@ -5,6 +5,8 @@ from db.init import test_connection
 from db.lgin import login_user
 from db.register import register_user
 from db.verification import verify_user_image, get_verification_status
+from db.heatmap import get_heatmap_data
+from db.safety_poll import submit_safety_poll, get_safety_polls
 
 # Create Flask app
 app = Flask(__name__)
@@ -73,6 +75,18 @@ def test_endpoint():
         "message": "API is accessible",
         "status": "success"
     })
+
+@app.route('/api/heatmap', methods=['GET'])
+def heatmap():
+    return get_heatmap_data()
+
+@app.route('/api/safety-poll', methods=['POST'])
+def safety_poll():
+    return submit_safety_poll()
+
+@app.route('/api/safety-polls', methods=['GET'])
+def safety_polls():
+    return get_safety_polls()
 
 if __name__ == '__main__':
     # Get port from environment variable or default to 5000

@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0f0f0f",
+    paddingTop: 20, // Add top padding
   },
   scrollView: {
     flex: 1,
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
   servicesGrid: {
     paddingHorizontal: 24,
     paddingBottom: 24,
+    marginTop: 16, // Add top margin
   },
   serviceCard: {
     backgroundColor: "#1a1a1a",
@@ -272,6 +274,7 @@ const styles = StyleSheet.create({
   quickActionsSection: {
     paddingHorizontal: 24,
     paddingBottom: 24,
+    marginTop: 16, // Add top margin
   },
   sectionTitle: {
     fontSize: 18,

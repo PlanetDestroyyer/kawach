@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0f0f0f",
+    paddingTop: 20, // Add top padding
   },
   header: {
     backgroundColor: "#1a1a1a",
@@ -192,6 +193,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 32,
+    marginTop: 16, // Add top margin
   },
   sectionTitle: {
     fontSize: 20,

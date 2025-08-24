@@ -64,6 +64,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="safety_poll"
+        options={{
+          title: "Safety Poll",
+          tabBarLabel: "Poll",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="poll" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",

@@ -283,6 +283,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0f0f0f",
+    paddingTop: 20, // Add top padding
   },
   scrollView: {
     flex: 1,
@@ -324,6 +325,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 24,
     marginBottom: 24,
+    marginTop: 16, // Add top margin
   },
   sectionHeader: {
     flexDirection: "row",

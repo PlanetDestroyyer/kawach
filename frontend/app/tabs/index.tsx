@@ -1,13 +1,104 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import MapView, { Marker, Circle } from "react-native-maps";
+import * as Location from "expo-location";
 
 export default function HomeScreen() {
   const [isLocationSharing, setIsLocationSharing] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [region, setRegion] = useState({
+    latitude: 18.5204, // Default to Pune
+    longitude: 73.8567,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
+  const [loading, setLoading] = useState(true);
+  
   const [trustedContacts] = useState([
     { id: 1, name: "Mom", phone: "+1 234-567-8901", relation: "Mother" },
     { id: 2, name: "Sarah", phone: "+1 234-567-8902", relation: "Best Friend" },
   ]);
+
+  // Mock heatmap data for Pune
+  const heatmapData = [
+    {
+      id: 1,
+      latitude: 18.5204,
+      longitude: 73.8567,
+      weight: 0.8,
+      radius: 800,
+      location_string: "FC Road",
+      type: "crime"
+    },
+    {
+      id: 2,
+      latitude: 18.5216,
+      longitude: 73.8718,
+      weight: 0.6,
+      radius: 600,
+      location_string: "Camp",
+      type: "poll"
+    },
+    {
+      id: 3,
+      latitude: 18.6404,
+      longitude: 73.7917,
+      weight: 0.9,
+      radius: 1000,
+      location_string: "Chinchwad",
+      type: "news"
+    },
+    {
+      id: 4,
+      latitude: 18.5642,
+      longitude: 73.9077,
+      weight: 0.3,
+      radius: 400,
+      location_string: "Koregaon Park",
+      type: "poll"
+    },
+    {
+      id: 5,
+      latitude: 18.5074,
+      longitude: 73.8077,
+      weight: 0.7,
+      radius: 700,
+      location_string: "Warje",
+      type: "crime"
+    }
+  ];
+
+  useEffect(() => {
+    getLocationAsync();
+  }, []);
+
+  const getLocationAsync = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Location permission is required to show your location on the map');
+        setLoading(false);
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      
+      setUserLocation({ latitude, longitude });
+      setRegion({
+        latitude,
+        longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      Alert.alert('Error', 'Could not get your current location. Using default location.');
+      setLoading(false);
+    }
+  };
 
   const handleSendSOS = () => {
     Alert.alert(
@@ -50,9 +141,16 @@ export default function HomeScreen() {
     );
   };
 
+  // Function to determine color based on risk level
+  const getRiskColor = (weight) => {
+    if (weight > 0.7) return 'rgba(244, 67, 54, 0.6)'; // High risk - red
+    if (weight > 0.4) return 'rgba(255, 152, 0, 0.6)';  // Medium risk - orange
+    return 'rgba(76, 175, 80, 0.6)';                   // Low risk - green
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* SOS Button */}
         <View style={styles.sosButtonContainer}>
           <TouchableOpacity onPress={handleSendSOS} style={styles.sosButton}>
@@ -73,24 +171,95 @@ export default function HomeScreen() {
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <MaterialIcons name="signal-cellular-alt" size={20} color="#4CAF50" />
-              <Text style={styles.cardTitle}>GPS Active & Tracking</Text>
+              <MaterialIcons name="map" size={20} color="#4CAF50" />
+              <Text style={styles.cardTitle}>Safety Heatmap</Text>
               <View style={styles.liveIndicator}>
                 <MaterialIcons name="access-time" size={16} color="#999" />
-                <Text style={styles.liveText}>Live • 2s ago</Text>
+                <Text style={styles.liveText}>Live</Text>
               </View>
             </View>
 
-            <View style={styles.mapPlaceholder}>
-              <MaterialIcons name="map" size={48} color="#999" />
-              <Text style={styles.mapText}>Downtown Area, City Center</Text>
-              <Text style={styles.mapDetails}>Accuracy: ±5 meters</Text>
+            <View style={styles.mapContainer}>
+              {loading ? (
+                <View style={styles.mapLoading}>
+                  <ActivityIndicator size="large" color="#5a3d7a" />
+                  <Text style={styles.mapLoadingText}>Getting your location...</Text>
+                </View>
+              ) : (
+                <MapView
+                  style={styles.map}
+                  region={{
+                    latitude: region.latitude,
+                    longitude: region.longitude,
+                    latitudeDelta: region.latitudeDelta,
+                    longitudeDelta: region.longitudeDelta,
+                  }}
+                  showsUserLocation={true}
+                  showsMyLocationButton={true}
+                  showsCompass={true}
+                  showsScale={true}
+                  loadingEnabled={true}
+                  loadingIndicatorColor="#5a3d7a"
+                  loadingBackgroundColor="#1a1a1a"
+                  onRegionChangeComplete={setRegion}
+                >
+                  {/* User location marker */}
+                  {userLocation && (
+                    <Marker
+                      coordinate={{
+                        latitude: userLocation.latitude,
+                        longitude: userLocation.longitude,
+                      }}
+                      title="Your Current Location"
+                      description="This is your current position"
+                    >
+                      <MaterialIcons name="person-pin-circle" size={40} color="#2196F3" />
+                    </Marker>
+                  )}
+
+                  {/* Heatmap circles for danger zones */}
+                  {heatmapData.map((point) => (
+                    <Circle
+                      key={point.id}
+                      center={{
+                        latitude: point.latitude,
+                        longitude: point.longitude,
+                      }}
+                      radius={point.radius}
+                      fillColor={getRiskColor(point.weight)}
+                      strokeColor="rgba(255, 255, 255, 0.3)"
+                      strokeWidth={1}
+                      zIndex={1}
+                    />
+                  ))}
+                </MapView>
+              )}
+            </View>
+
+            {/* Legend */}
+            <View style={styles.legendContainer}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: 'red' }]} />
+                <Text style={styles.legendText}>High Risk</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: 'orange' }]} />
+                <Text style={styles.legendText}>Medium Risk</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: 'green' }]} />
+                <Text style={styles.legendText}>Low Risk</Text>
+              </View>
             </View>
 
             <View style={styles.locationInfo}>
               <View style={styles.locationRow}>
                 <MaterialIcons name="location-on" size={16} color="#2196F3" />
-                <Text style={styles.locationText}>Downtown Area, City Center</Text>
+                <Text style={styles.locationText}>
+                  {userLocation 
+                    ? `Lat: ${userLocation.latitude.toFixed(6)}, Lng: ${userLocation.longitude.toFixed(6)}` 
+                    : "Location: Pune, Maharashtra"}
+                </Text>
               </View>
             </View>
           </View>
@@ -204,9 +373,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0f0f0f",
+    paddingTop: 20,
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   sosButtonContainer: {
     position: "absolute",
@@ -238,6 +411,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 24,
     marginBottom: 24,
+    marginTop: 16,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -283,22 +457,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
   },
-  mapPlaceholder: {
-    height: 200,
-    backgroundColor: "#2a2a2a",
+  mapContainer: {
+    height: 300,
     borderRadius: 8,
+    overflow: "hidden",
+    marginBottom: 16,
+    backgroundColor: "#2a2a2a",
+  },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
+  mapLoading: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-  mapText: {
-    color: "#e5e5e5",
-    marginTop: 8,
+  mapLoadingText: {
+    color: "#a0a0a0",
+    marginTop: 12,
     fontSize: 16,
   },
-  mapDetails: {
-    color: "#a0a0a0",
-    fontSize: 14,
+  legendContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: "rgba(26, 26, 26, 0.8)",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  legendColor: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  legendText: {
+    color: "#e5e5e5",
+    fontSize: 12,
   },
   locationInfo: {
     backgroundColor: "rgba(26, 26, 26, 0.5)",

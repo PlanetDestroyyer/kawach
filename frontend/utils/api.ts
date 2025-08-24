@@ -158,6 +158,64 @@ export async function deleteTrustedContact(contactId: string) {
   });
 }
 
+// Heatmap API functions
+export async function getHeatmapData() {
+  // For now, we'll simulate the API call since we're focusing on the frontend
+  // In a real implementation, this would connect to your backend
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Mock heatmap data for Pune
+      const mockData = [
+        {
+          latitude: 18.5204,
+          longitude: 73.8567,
+          weight: 0.8,
+          bubble_radius: 800,
+          location_string: "FC Road",
+          type: "crime"
+        },
+        {
+          latitude: 18.5216,
+          longitude: 73.8718,
+          weight: 0.6,
+          bubble_radius: 600,
+          location_string: "Camp",
+          type: "poll"
+        },
+        {
+          latitude: 18.6404,
+          longitude: 73.7917,
+          weight: 0.9,
+          bubble_radius: 1000,
+          location_string: "Chinchwad",
+          type: "news"
+        },
+        {
+          latitude: 18.5642,
+          longitude: 73.9077,
+          weight: 0.3,
+          bubble_radius: 400,
+          location_string: "Koregaon Park",
+          type: "poll"
+        },
+        {
+          latitude: 18.5074,
+          longitude: 73.8077,
+          weight: 0.7,
+          bubble_radius: 700,
+          location_string: "Warje",
+          type: "crime"
+        }
+      ];
+      
+      resolve({
+        success: true,
+        data: mockData
+      });
+    }, 1000);
+  });
+}
+
 // Incident Reporting API functions
 export async function reportIncident(incidentData: any) {
   return apiCall("/api/incidents", {
@@ -185,6 +243,22 @@ export async function createCommunityPost(postData: any) {
   return apiCall("/api/community/posts", {
     method: "POST",
     body: JSON.stringify(postData),
+  });
+}
+
+// Safety Poll API functions
+export async function submitSafetyPoll(pollData: any) {
+  // For now, we'll simulate the API call since we're focusing on the frontend
+  // In a real implementation, this would connect to your backend
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        data: {
+          message: "Safety poll submitted successfully"
+        }
+      });
+    }, 1000);
   });
 }
 
