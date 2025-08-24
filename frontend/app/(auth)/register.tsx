@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView,
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { registerUser } from "../../utils/api";
 
 export default function RegisterScreen() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -74,44 +75,41 @@ export default function RegisterScreen() {
     if (currentStep === 1 && validateStep1()) {
       setCurrentStep(2);
     } else if (currentStep === 2 && validateStep2()) {
-      // Complete registration
+      // Complete registration by calling backend API
       try {
-        // Simulate API call to backend
-        // In a real app, you would make an actual API call here
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // For demo, we'll simulate a successful registration
-        const userData = {
-          id: "1",
+        const result = await registerUser({
           name: formData.name,
           email: formData.email,
-          aadharNumber: formData.aadharNumber,
-          emergencyContacts: [
-            { 
-              id: 1, 
-              name: formData.emergencyContactName, 
-              phone: formData.emergencyContactPhone, 
-              relation: formData.emergencyContactRelation 
-            }
-          ]
-        };
-        
-        // Store user data and token
-        await AsyncStorage.setItem("userToken", "demo-token-12345");
-        await AsyncStorage.setItem("userProfile", JSON.stringify(userData));
-        
-        Alert.alert(
-          "Registration Complete",
-          "Your account has been created successfully!",
-          [
-            { 
-              text: "OK", 
-              onPress: () => router.replace("/(auth)/verify") 
-            }
-          ]
-        );
+          password: formData.password,
+          aadhar_number: formData.aadharNumber.replace(/\s/g, ""),
+          emergency_contact: {
+            name: formData.emergencyContactName,
+            phone: formData.emergencyContactPhone,
+            relation: formData.emergencyContactRelation
+          }
+        });
+
+        if (result.success) {
+          // Store user data and token
+          await AsyncStorage.setItem("userToken", result.data.token || "temp-token");
+          await AsyncStorage.setItem("userProfile", JSON.stringify(result.data.user));
+          
+          Alert.alert(
+            "Registration Complete",
+            "Your account has been created successfully!",
+            [
+              { 
+                text: "OK", 
+                onPress: () => router.replace("/(auth)/verify") 
+              }
+            ]
+          );
+        } else {
+          Alert.alert("Error", result.data.message || "Registration failed");
+        }
       } catch (error) {
-        Alert.alert("Error", "Registration failed. Please try again.");
+        Alert.alert("Error", "Network error. Please try again.");
+        console.error("Registration error:", error);
       }
     }
   };

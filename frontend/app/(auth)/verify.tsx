@@ -4,6 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { CameraView, Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { verifyUserImage } from "../../utils/api";
 
 export default function VerifyScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -49,25 +50,49 @@ export default function VerifyScreen() {
     }
 
     try {
-      // Simulate API call for verification
-      // In a real app, you would send the image to your backend for verification
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get user data from AsyncStorage
+      const userProfileStr = await AsyncStorage.getItem("userProfile");
+      if (!userProfileStr) {
+        Alert.alert("Error", "User not found. Please log in again.");
+        router.replace("/(auth)/login");
+        return;
+      }
+
+      const userProfile = JSON.parse(userProfileStr);
       
-      // For demo, we'll simulate a successful verification
-      await AsyncStorage.setItem("isVerified", "true");
+      // Convert image to base64 for sending to backend
+      const response = await fetch(capturedImage);
+      const blob = await response.blob();
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      // Send verification request to backend
+      const result = await verifyUserImage(userProfile._id, base64Image);
       
-      Alert.alert(
-        "Verification Complete",
-        "Your identity has been verified successfully!",
-        [
-          { 
-            text: "Continue", 
-            onPress: () => router.replace("/tabs") 
-          }
-        ]
-      );
+      if (result.success) {
+        // Update verification status in AsyncStorage
+        await AsyncStorage.setItem("isVerified", "true");
+        
+        Alert.alert(
+          "Verification Complete",
+          "Your identity has been verified successfully!",
+          [
+            { 
+              text: "Continue", 
+              onPress: () => router.replace("/tabs") 
+            }
+          ]
+        );
+      } else {
+        Alert.alert("Error", result.data.message || "Verification failed. Please try again.");
+      }
     } catch (error) {
-      Alert.alert("Error", "Verification failed. Please try again.");
+      Alert.alert("Error", "Network error. Please try again.");
+      console.error("Verification error:", error);
     }
   };
 

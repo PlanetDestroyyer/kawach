@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView 
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { loginUser } from "../../utils/api";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -19,30 +20,23 @@ export default function LoginScreen() {
     setLoading(true);
     
     try {
-      // Simulate API call to backend
-      // In a real app, you would make an actual API call here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await loginUser(email, password);
       
-      // For demo, we'll simulate a successful login
-      const userData = {
-        id: "1",
-        name: "Demo User",
-        email: email,
-        emergencyContacts: [
-          { id: 1, name: "Mom", phone: "+1 234-567-8901", relation: "Mother" },
-          { id: 2, name: "Sarah", phone: "+1 234-567-8902", relation: "Best Friend" },
-        ]
-      };
-      
-      // Store user data and token
-      await AsyncStorage.setItem("userToken", "demo-token-12345");
-      await AsyncStorage.setItem("userProfile", JSON.stringify(userData));
-      
-      setLoading(false);
-      router.replace("/tabs");
+      if (result.success) {
+        // Store token and user data
+        await AsyncStorage.setItem("userToken", result.data.token);
+        await AsyncStorage.setItem("userProfile", JSON.stringify(result.data.user));
+        
+        setLoading(false);
+        router.replace("/tabs");
+      } else {
+        setLoading(false);
+        Alert.alert("Error", result.data.message || "Login failed");
+      }
     } catch (error) {
       setLoading(false);
-      Alert.alert("Error", "Login failed. Please try again.");
+      Alert.alert("Error", "Network error. Please try again.");
+      console.error("Login error:", error);
     }
   };
 
