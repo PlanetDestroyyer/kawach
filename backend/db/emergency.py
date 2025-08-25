@@ -39,26 +39,36 @@ def send_sos():
         
         # Validate user exists if user_id is provided
         user = None
+        user_info = ""
         if data.get('user_id'):
             try:
                 user = customer_records.find_one({"_id": ObjectId(data['user_id'])})
+                if user:
+                    name = user.get('name', 'Unknown')
+                    phone = user.get('phone', 'Unknown')
+                    user_info = f"Name: {name}, Phone: {phone}"
             except Exception:
                 # Invalid user ID format, continue without user data
                 pass
         
+        # Create location info
+        lat = location.get('latitude', 'Unknown')
+        lon = location.get('longitude', 'Unknown')
+        location_info = f"Location: {lat}, {lon}"
+        
+        # Create complete message
+        complete_message = f"EMERGENCY SOS! {message} {user_info} {location_info}"
+        
         # Send SMS to emergency number
-        sms_result = send_sms("8459582668", message)
+        sms_result = send_sms("8459582668", complete_message)
         
         # For now, we'll just log the SOS
         sos_record = {
             "location": location,
-            "message": message,
+            "message": complete_message,
             "timestamp": datetime.datetime.utcnow(),
             "status": "sent"
         }
-        
-        # Store SOS record in database (in a real app, you would have a separate SOS collection)
-        # For now, we'll just log it
         
         return jsonify({
             "success": True,
@@ -70,7 +80,7 @@ def send_sos():
     except Exception as e:
         # Even if there's an error in our code, we still want to send the SMS
         try:
-            send_sms("8459582668", "Please help me! I am in danger.")
+            send_sms("8459582668", "EMERGENCY SOS! Please help me! I am in danger.")
             return jsonify({
                 "success": True,
                 "message": "SOS alert sent successfully (with error in processing)",

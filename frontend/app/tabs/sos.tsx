@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { sendSOS } from "../../utils/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 
 export default function SOSScreen() {
   const handleSendSOS = async () => {
@@ -14,13 +16,33 @@ export default function SOSScreen() {
           text: "SEND SOS", 
           onPress: async () => {
             try {
-              // Send SOS through backend API which will trigger SMS
-              const location = {
-                latitude: 18.5204,  // Default location for now
+              // Get user profile
+              const userProfileString = await AsyncStorage.getItem("userProfile");
+              let userId = null;
+              
+              if (userProfileString) {
+                const userProfile = JSON.parse(userProfileString);
+                userId = userProfile._id;
+              }
+              
+              // Get current location
+              let location = {
+                latitude: 18.5204,  // Default location
                 longitude: 73.8567
               };
               
-              const result = await sendSOS(location, "Please help me! I am in danger.");
+              try {
+                const locationResult = await Location.getCurrentPositionAsync({});
+                location = {
+                  latitude: locationResult.coords.latitude,
+                  longitude: locationResult.coords.longitude
+                };
+              } catch (locationError) {
+                console.log("Could not get current location, using default");
+              }
+              
+              // Send SOS through backend API which will trigger SMS with user info
+              const result = await sendSOS(location, "Please help me! I am in danger.", userId);
               
               if (result.success) {
                 Alert.alert(

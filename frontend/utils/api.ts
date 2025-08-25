@@ -128,23 +128,17 @@ export async function getVerificationStatus(userId: string) {
 }
 
 // Emergency Services API functions
-export async function sendSOS(location: any, message: string) {
-  // Get user ID from AsyncStorage
-  const userProfileString = await AsyncStorage.getItem("userProfile");
-  if (!userProfileString) {
-    return {
-      success: false,
-      status: 401,
-      data: { message: "User not authenticated" }
-    };
-  }
+export async function sendSOS(location: any, message: string, userId?: string) {
+  const requestData: any = { location, message };
   
-  const userProfile = JSON.parse(userProfileString);
-  const userId = userProfile._id;
+  // Only include user_id if it's provided
+  if (userId) {
+    requestData.user_id = userId;
+  }
   
   return apiCall("/api/emergency/sos", {
     method: "POST",
-    body: JSON.stringify({ user_id: userId, location, message }),
+    body: JSON.stringify(requestData),
   });
 }
 
