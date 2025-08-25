@@ -13,7 +13,6 @@ export default function TabLayout() {
           backgroundColor: "#1a1a1a",
           borderTopWidth: 1,
           borderTopColor: "#2a2a2a",
-          justifyContent: "space-around",
         },
         headerStyle: {
           backgroundColor: "#1a1a1a",
