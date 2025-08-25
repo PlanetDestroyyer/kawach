@@ -48,3 +48,5 @@ web-build/
 *.swp
 *.tmp
 *~
+
+venv
