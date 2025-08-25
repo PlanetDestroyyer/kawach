@@ -10,6 +10,48 @@ from .init import customer_records
 from bson import ObjectId
 from sos import send_sms
 
+# Import geopy for reverse geocoding
+try:
+    from geopy.geocoders import Nominatim
+    from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+    geolocator = Nominatim(user_agent="safeguard_app")
+    GEOCODING_AVAILABLE = True
+except ImportError:
+    GEOCODING_AVAILABLE = False
+    print("Geopy not available, using coordinates only")
+
+def reverse_geocode(latitude, longitude):
+    """
+    Convert coordinates to a readable address
+    
+    Args:
+        latitude (float): Latitude coordinate
+        longitude (float): Longitude coordinate
+        
+    Returns:
+        str: Readable address or coordinate string if geocoding fails
+    """
+    if not GEOCODING_AVAILABLE:
+        return f"{latitude}, {longitude}"
+    
+    try:
+        location = geolocator.reverse(f"{latitude}, {longitude}", timeout=10)
+        if location and location.address:
+            # Return a shortened version of the address
+            address_parts = location.address.split(',')
+            if len(address_parts) > 3:
+                return f"{address_parts[0]}, {address_parts[1]}, {address_parts[2]}"
+            else:
+                return location.address
+        else:
+            return f"{latitude}, {longitude}"
+    except (GeocoderTimedOut, GeocoderServiceError) as e:
+        print(f"Geocoding error: {e}")
+        return f"{latitude}, {longitude}"
+    except Exception as e:
+        print(f"Unexpected geocoding error: {e}")
+        return f"{latitude}, {longitude}"
+
 def send_sos():
     """
     Handle emergency SOS requests
@@ -37,43 +79,34 @@ def send_sos():
         location = data['location']
         message = data.get('message', 'Please help me! I am in danger.')
         
-        # Validate user exists if user_id is provided
-        user = None
-        user_info = ""
+        # Get user information if user_id is provided
+        user_name = "Unknown User"
+        user_phone = "Unknown Phone"
         if data.get('user_id'):
             try:
                 user = customer_records.find_one({"_id": ObjectId(data['user_id'])})
                 if user:
-                    name = user.get('name', 'Unknown')
-                    phone = user.get('phone', 'Unknown')
-                    user_info = f"Name: {name}, Phone: {phone}"
+                    user_name = user.get('name', 'Unknown User')
+                    user_phone = user.get('phone', user.get('emergency_contact', {}).get('phone', 'Unknown Phone'))
             except Exception:
-                # Invalid user ID format, continue without user data
+                # Invalid user ID format, continue with default values
                 pass
         
-        # Create location info
-        lat = location.get('latitude', 'Unknown')
-        lon = location.get('longitude', 'Unknown')
-        location_info = f"Location: {lat}, {lon}"
+        # Get readable location address
+        lat = location.get('latitude', 0)
+        lon = location.get('longitude', 0)
+        readable_location = reverse_geocode(lat, lon)
         
-        # Create complete message
-        complete_message = f"EMERGENCY SOS! {message} {user_info} {location_info}"
+        # Create complete message with user info and readable location
+        complete_message = f"EMERGENCY SOS! {message} Name: {user_name}, Phone: {user_phone}, Location: {readable_location}"
         
         # Send SMS to emergency number
         sms_result = send_sms("8459582668", complete_message)
         
-        # For now, we'll just log the SOS
-        sos_record = {
-            "location": location,
-            "message": complete_message,
-            "timestamp": datetime.datetime.utcnow(),
-            "status": "sent"
-        }
-        
         return jsonify({
             "success": True,
             "message": "SOS alert sent successfully",
-            "timestamp": sos_record["timestamp"],
+            "timestamp": datetime.datetime.utcnow(),
             "sms_sent": sms_result is not None
         }), 200
             
