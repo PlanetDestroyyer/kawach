@@ -8,12 +8,12 @@ const TabBarIcon = ({ name, color }: { name: string; color: string }) => (
   <MaterialIcons 
     name={name as any} 
     color={color} 
-    size={28} 
+    size={36} 
     style={{ 
       textAlign: 'center',
-      width: 28,
-      height: 28,
-      lineHeight: 28,
+      width: 36,
+      height: 36,
+      lineHeight: 36,
     }} 
   />
 );
@@ -28,13 +28,13 @@ export default function TabLayout() {
           backgroundColor: "#1a1a1a",
           borderTopWidth: 1,
           borderTopColor: "#2a2a2a",
-          height: 60,
-          paddingBottom: 5,
-          paddingTop: 5,
+          height: 80,
+          paddingBottom: 10,
+          paddingTop: 10,
           paddingHorizontal: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 16,
         },
         tabBarItemStyle: {
           padding: 0,
