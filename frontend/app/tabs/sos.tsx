@@ -22,13 +22,7 @@ export default function SOSScreen() {
     );
   };
 
-  const handleFakeCall = () => {
-    Alert.alert(
-      "📞 Fake Call",
-      "Initiating fake call in 5 seconds...\nThis will help you exit uncomfortable situations safely.",
-      [{ text: "OK" }]
-    );
-  };
+  
 
   const handleLoudSiren = () => {
     Alert.alert(
@@ -61,10 +55,8 @@ export default function SOSScreen() {
         {/* Primary SOS Button */}
         <View style={styles.sosButtonContainer}>
           <TouchableOpacity onPress={handleSendSOS} style={styles.sosButton}>
-            <View style={styles.sosButtonContent}>
-              <MaterialIcons name="phone" size={48} color="#fff" />
-              <Text style={styles.sosButtonText}>SEND SOS</Text>
-            </View>
+            <MaterialIcons name="phone" size={64} color="#fff" />
+            <Text style={styles.sosButtonText}>SEND SOS</Text>
           </TouchableOpacity>
         </View>
 
@@ -79,14 +71,6 @@ export default function SOSScreen() {
               </View>
               <Text style={styles.actionTitle}>Send Live Location</Text>
               <Text style={styles.actionDescription}>Share your location with emergency contacts</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard} onPress={handleFakeCall}>
-              <View style={styles.actionIconContainer}>
-                <MaterialIcons name="phone-forwarded" size={32} color="#4CAF50" />
-              </View>
-              <Text style={styles.actionTitle}>Fake Call</Text>
-              <Text style={styles.actionDescription}>Simulate an incoming call to escape</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionCard} onPress={handleLoudSiren}>
@@ -170,9 +154,9 @@ const styles = StyleSheet.create({
     marginVertical: 32,
   },
   sosButton: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     backgroundColor: "#f44336",
     justifyContent: "center",
     alignItems: "center",
@@ -181,9 +165,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 12,
-  },
-  sosButtonContent: {
-    alignItems: "center",
   },
   sosButtonText: {
     color: "#fff",

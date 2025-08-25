@@ -2,8 +2,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Base URL for API calls
-// For mobile apps, localhost won't work, so we use environment variables or a default IP
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.137.142:5000"; // Change this to your machine's IP
+// For mobile apps, we need to use the actual IP address of the backend machine
+// In development, this should be set in the .env file
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.137.109:5000";
 
 // Generic API call function with retry logic and better error handling
 export async function apiCall(endpoint: string, options: RequestInit = {}, retries = 3) {
@@ -28,7 +29,7 @@ export async function apiCall(endpoint: string, options: RequestInit = {}, retri
     
     // Make the API call with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
@@ -81,9 +82,9 @@ export async function apiCall(endpoint: string, options: RequestInit = {}, retri
     }
     
     // Retry logic for network errors
-    if (retries > 0 && (error instanceof TypeError)) {
+    if (retries > 0 && (error instanceof TypeError || error.name === "AbortError")) {
       console.log(`Retrying API call... (${retries} attempts left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retry
       return apiCall(endpoint, options, retries - 1);
     }
     

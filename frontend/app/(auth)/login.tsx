@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,16 +10,34 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const router = useRouter();
   const { setIsAuthenticated } = useAuth();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
-      return;
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email is invalid";
     }
+    
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({});
     
     try {
       const result = await loginUser(email, password);
@@ -46,11 +64,11 @@ export default function LoginScreen() {
         }
       } else {
         setLoading(false);
-        Alert.alert("Error", result.data.message || "Login failed");
+        setErrors({ general: result.data.message || "Login failed" });
       }
     } catch (error) {
       setLoading(false);
-      Alert.alert("Error", "Network error. Please try again.");
+      setErrors({ general: "Network error. Please try again." });
       console.error("Login error:", error);
     }
   };
@@ -84,6 +102,7 @@ export default function LoginScreen() {
   const useDemoCredentials = () => {
     setEmail("demo@example.com");
     setPassword("demopassword");
+    setErrors({});
   };
 
   return (
@@ -103,8 +122,15 @@ export default function LoginScreen() {
           <Text style={styles.formTitle}>Welcome Back</Text>
           <Text style={styles.formSubtitle}>Sign in to your account</Text>
 
+          {errors.general ? (
+            <View style={styles.errorBanner}>
+              <MaterialIcons name="error" size={16} color="#f44336" />
+              <Text style={styles.errorText}>{errors.general}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.inputGroup}>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, errors.email && styles.inputError]}>
               <MaterialIcons name="email" size={20} color="#a0a0a0" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
@@ -117,10 +143,11 @@ export default function LoginScreen() {
                 autoCorrect={false}
               />
             </View>
+            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           </View>
 
           <View style={styles.inputGroup}>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, errors.password && styles.inputError]}>
               <MaterialIcons name="lock" size={20} color="#a0a0a0" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
@@ -132,6 +159,7 @@ export default function LoginScreen() {
                 autoCapitalize="none"
               />
             </View>
+            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
           </View>
 
           <TouchableOpacity 
@@ -139,10 +167,17 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
           >
-            <Text style={styles.loginButtonText}>
-              {loading ? "Signing In..." : "Sign In"}
-            </Text>
-            <MaterialIcons name="arrow-forward" size={20} color="#fff" style={styles.buttonIcon} />
+            {loading ? (
+              <>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.loginButtonText}>Signing In...</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.loginButtonText}>Sign In</Text>
+                <MaterialIcons name="arrow-forward" size={20} color="#fff" style={styles.buttonIcon} />
+              </>
+            )}
           </TouchableOpacity>
 
           {/* Demo Credentials Button */}
@@ -225,6 +260,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
   },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(244, 67, 54, 0.1)",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
   inputGroup: {
     marginBottom: 20,
   },
@@ -236,6 +279,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2a2a2a",
   },
+  inputError: {
+    borderColor: "#f44336",
+  },
   inputIcon: {
     marginLeft: 16,
   },
@@ -245,6 +291,12 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     fontSize: 16,
     color: "#e5e5e5",
+  },
+  errorText: {
+    color: "#f44336",
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 16,
   },
   loginButton: {
     flexDirection: "row",
@@ -266,6 +318,16 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 8,
+  },
+  demoButton: {
+    marginTop: 16,
+    padding: 12,
+    alignItems: "center",
+  },
+  demoButtonText: {
+    color: "#a0a0a0",
+    fontSize: 14,
+    textDecorationLine: "underline",
   },
   footer: {
     flexDirection: "row",

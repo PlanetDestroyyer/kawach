@@ -7,6 +7,8 @@ from db.register import register_user
 from db.verification import verify_user_image, get_verification_status
 from db.heatmap import get_heatmap_data
 from db.safety_poll import submit_safety_poll, get_safety_polls
+from db.emergency import send_sos, send_location_to_contacts
+from db.contacts import get_trusted_contacts, add_trusted_contact, update_trusted_contact, delete_trusted_contact
 
 # Create Flask app
 app = Flask(__name__)
@@ -87,6 +89,32 @@ def safety_poll():
 @app.route('/api/safety-polls', methods=['GET'])
 def safety_polls():
     return get_safety_polls()
+
+# Emergency services endpoints
+@app.route('/api/emergency/sos', methods=['POST'])
+def emergency_sos():
+    return send_sos()
+
+@app.route('/api/emergency/send-location', methods=['POST'])
+def emergency_send_location():
+    return send_location_to_contacts()
+
+# Contacts management endpoints
+@app.route('/api/contacts/<user_id>', methods=['GET'])
+def contacts_get(user_id):
+    return get_trusted_contacts(user_id)
+
+@app.route('/api/contacts/<user_id>', methods=['POST'])
+def contacts_add(user_id):
+    return add_trusted_contact(user_id)
+
+@app.route('/api/contacts/<user_id>/<int:contact_index>', methods=['PUT'])
+def contacts_update(user_id, contact_index):
+    return update_trusted_contact(user_id, contact_index)
+
+@app.route('/api/contacts/<user_id>/<int:contact_index>', methods=['DELETE'])
+def contacts_delete(user_id, contact_index):
+    return delete_trusted_contact(user_id, contact_index)
 
 if __name__ == '__main__':
     # Get port from environment variable or default to 5000

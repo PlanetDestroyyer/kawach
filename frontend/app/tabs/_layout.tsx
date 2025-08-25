@@ -1,6 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import { View, StyleSheet } from "react-native";
 
 export default function TabLayout() {
   return (
@@ -12,6 +13,7 @@ export default function TabLayout() {
           backgroundColor: "#1a1a1a",
           borderTopWidth: 1,
           borderTopColor: "#2a2a2a",
+          justifyContent: "space-around",
         },
         headerStyle: {
           backgroundColor: "#1a1a1a",
@@ -27,17 +29,6 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="home" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: "Safety Map",
-          tabBarLabel: "Map",
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="map" color={color} size={size} />
           ),
         }}
       />
@@ -99,3 +90,5 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({});

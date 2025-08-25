@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Platform } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Platform, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,74 +19,89 @@ export default function RegisterScreen() {
     emergencyContactRelation: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showRelationOptions, setShowRelationOptions] = useState(false);
   const router = useRouter();
   const { setIsAuthenticated } = useAuth();
+
+  // Relationship options
+  const relationOptions = [
+    "Parent",
+    "Spouse",
+    "Sibling",
+    "Child",
+    "Friend",
+    "Colleague",
+    "Other"
+  ];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
-    if (error) setError(null);
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const validateStep1 = () => {
+    const newErrors: Record<string, string> = {};
+    
     if (!formData.name.trim()) {
-      Alert.alert("Error", "Please enter your full name");
-      return false;
+      newErrors.name = "Full name is required";
     }
+    
     if (!formData.email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
-      return false;
+      newErrors.email = "Email address is required";
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
-    // Simple email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      Alert.alert("Error", "Please enter a valid email address");
-      return false;
-    }
+    
     if (!formData.password) {
-      Alert.alert("Error", "Please enter a password");
-      return false;
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
-    if (formData.password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
-      return false;
-    }
+    
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
-      return false;
+      newErrors.confirmPassword = "Passwords do not match";
     }
-    return true;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+    
     if (!formData.aadharNumber.trim()) {
-      Alert.alert("Error", "Please enter your Aadhar card number");
-      return false;
+      newErrors.aadharNumber = "Aadhar card number is required";
+    } else {
+      const cleanedAadhar = formData.aadharNumber.replace(/\s/g, "");
+      if (cleanedAadhar.length !== 12 || !/^\d{12}$/.test(cleanedAadhar)) {
+        newErrors.aadharNumber = "Aadhar number must be 12 digits";
+      }
     }
-    const cleanedAadhar = formData.aadharNumber.replace(/\s/g, "");
-    if (cleanedAadhar.length !== 12 || !/^\d{12}$/.test(cleanedAadhar)) {
-      Alert.alert("Error", "Aadhar number must be 12 digits");
-      return false;
-    }
+    
     if (!formData.emergencyContactName.trim()) {
-      Alert.alert("Error", "Please enter emergency contact name");
-      return false;
+      newErrors.emergencyContactName = "Emergency contact name is required";
     }
+    
     if (!formData.emergencyContactPhone.trim()) {
-      Alert.alert("Error", "Please enter emergency contact phone");
-      return false;
+      newErrors.emergencyContactPhone = "Emergency contact phone is required";
+    } else if (formData.emergencyContactPhone.replace(/\D/g, "").length < 10) {
+      newErrors.emergencyContactPhone = "Please enter a valid phone number";
     }
-    // Simple phone validation (you might want to improve this)
-    if (formData.emergencyContactPhone.replace(/\D/g, "").length < 10) {
-      Alert.alert("Error", "Please enter a valid phone number");
-      return false;
-    }
+    
     if (!formData.emergencyContactRelation) {
-      Alert.alert("Error", "Please select relationship with emergency contact");
-      return false;
+      newErrors.emergencyContactRelation = "Please select relationship with emergency contact";
     }
-    return true;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = async () => {
@@ -95,7 +110,7 @@ export default function RegisterScreen() {
     } else if (currentStep === 2 && validateStep2()) {
       // Complete registration by calling backend API
       setLoading(true);
-      setError(null);
+      setErrors({});
       try {
         const result = await registerUser({
           name: formData.name.trim(),
@@ -133,14 +148,12 @@ export default function RegisterScreen() {
         } else {
           setLoading(false);
           const errorMessage = result.data.message || "Registration failed. Please try again.";
-          setError(errorMessage);
-          Alert.alert("Error", errorMessage);
+          setErrors({ general: errorMessage });
         }
       } catch (error: any) {
         setLoading(false);
         const errorMessage = error.message || "Network error. Please try again.";
-        setError(errorMessage);
-        Alert.alert("Error", errorMessage);
+        setErrors({ general: errorMessage });
         console.error("Registration error:", error);
       }
     }
@@ -190,10 +203,10 @@ export default function RegisterScreen() {
         </View>
 
         {/* Error Message */}
-        {error ? (
+        {errors.general ? (
           <View style={styles.errorContainer}>
             <MaterialIcons name="error" size={20} color="#f44336" />
-            <Text style={styles.errorMessage}>{error}</Text>
+            <Text style={styles.errorMessage}>{errors.general}</Text>
           </View>
         ) : null}
 
@@ -204,7 +217,7 @@ export default function RegisterScreen() {
               <Text style={styles.stepTitle}>Personal Information</Text>
               
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.name && styles.inputError]}>
                   <MaterialIcons name="person" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -215,10 +228,11 @@ export default function RegisterScreen() {
                     autoCapitalize="words"
                   />
                 </View>
+                {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.email && styles.inputError]}>
                   <MaterialIcons name="email" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -231,10 +245,11 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
                 </View>
+                {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.password && styles.inputError]}>
                   <MaterialIcons name="lock" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -246,11 +261,12 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                   />
                 </View>
+                {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                 <Text style={styles.helperText}>At least 6 characters</Text>
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.confirmPassword && styles.inputError]}>
                   <MaterialIcons name="lock" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -262,6 +278,7 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                   />
                 </View>
+                {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
               </View>
             </View>
           )}
@@ -271,7 +288,7 @@ export default function RegisterScreen() {
               <Text style={styles.stepTitle}>Verification & Emergency Contact</Text>
               
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.aadharNumber && styles.inputError]}>
                   <MaterialIcons name="credit-card" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -283,6 +300,7 @@ export default function RegisterScreen() {
                     maxLength={14}
                   />
                 </View>
+                {errors.aadharNumber ? <Text style={styles.errorText}>{errors.aadharNumber}</Text> : null}
                 <Text style={styles.helperText}>For identity verification and emergency services</Text>
               </View>
 
@@ -291,7 +309,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.emergencyContactName && styles.inputError]}>
                   <MaterialIcons name="person" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -302,10 +320,11 @@ export default function RegisterScreen() {
                     autoCapitalize="words"
                   />
                 </View>
+                {errors.emergencyContactName ? <Text style={styles.errorText}>{errors.emergencyContactName}</Text> : null}
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, errors.emergencyContactPhone && styles.inputError]}>
                   <MaterialIcons name="phone" size={20} color="#a0a0a0" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
@@ -316,28 +335,44 @@ export default function RegisterScreen() {
                     keyboardType="phone-pad"
                   />
                 </View>
+                {errors.emergencyContactPhone ? <Text style={styles.errorText}>{errors.emergencyContactPhone}</Text> : null}
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.selectContainer}>
+                <View style={[styles.selectContainer, errors.emergencyContactRelation && styles.inputError]}>
                   <MaterialIcons name="people" size={20} color="#a0a0a0" style={styles.inputIcon} />
-                  <View style={styles.selectWrapper}>
+                  <TouchableOpacity 
+                    style={styles.selectWrapper}
+                    onPress={() => setShowRelationOptions(!showRelationOptions)}
+                  >
                     <Text style={formData.emergencyContactRelation ? styles.selectText : styles.placeholderText}>
                       {formData.emergencyContactRelation || "Select relationship"}
                     </Text>
+                    <MaterialIcons 
+                      name={showRelationOptions ? "arrow-drop-up" : "arrow-drop-down"} 
+                      size={24} 
+                      color="#a0a0a0" 
+                    />
+                  </TouchableOpacity>
+                </View>
+                {errors.emergencyContactRelation ? <Text style={styles.errorText}>{errors.emergencyContactRelation}</Text> : null}
+                
+                {showRelationOptions && (
+                  <View style={styles.optionsContainer}>
+                    {relationOptions.map((relation) => (
+                      <TouchableOpacity
+                        key={relation}
+                        style={styles.option}
+                        onPress={() => {
+                          handleInputChange("emergencyContactRelation", relation);
+                          setShowRelationOptions(false);
+                        }}
+                      >
+                        <Text style={styles.optionText}>{relation}</Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                </View>
-                <View style={styles.optionsContainer}>
-                  {["Parent", "Spouse", "Sibling", "Friend", "Other"].map((relation) => (
-                    <TouchableOpacity
-                      key={relation}
-                      style={styles.option}
-                      onPress={() => handleInputChange("emergencyContactRelation", relation)}
-                    >
-                      <Text style={styles.optionText}>{relation}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                )}
               </View>
             </View>
           )}
@@ -358,18 +393,24 @@ export default function RegisterScreen() {
               onPress={handleNext}
               disabled={loading}
             >
-              <Text style={styles.navButtonText}>
-                {loading ? (currentStep === 2 ? "Completing Setup..." : "Loading...") : 
-                 (currentStep === 2 ? "Complete Setup" : "Continue")}
-              </Text>
               {loading ? (
-                <MaterialIcons name="hourglass-empty" size={20} color="#fff" />
+                <>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={styles.navButtonText}>
+                    {currentStep === 2 ? "Completing Setup..." : "Loading..."}
+                  </Text>
+                </>
               ) : (
-                <MaterialIcons 
-                  name={currentStep === 2 ? "check" : "arrow-forward"} 
-                  size={20} 
-                  color="#fff" 
-                />
+                <>
+                  <Text style={styles.navButtonText}>
+                    {currentStep === 2 ? "Complete Setup" : "Continue"}
+                  </Text>
+                  <MaterialIcons 
+                    name={currentStep === 2 ? "check" : "arrow-forward"} 
+                    size={20} 
+                    color="#fff" 
+                  />
+                </>
               )}
             </TouchableOpacity>
           </View>
@@ -442,6 +483,20 @@ const styles = StyleSheet.create({
   activeDot: {
     backgroundColor: "#5a3d7a",
   },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(244, 67, 54, 0.1)",
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 24,
+    marginBottom: 16,
+  },
+  errorMessage: {
+    color: "#f44336",
+    marginLeft: 8,
+    fontSize: 14,
+  },
   formCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 16,
@@ -471,6 +526,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2a2a2a",
   },
+  inputError: {
+    borderColor: "#f44336",
+  },
   selectContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -481,8 +539,12 @@ const styles = StyleSheet.create({
   },
   selectWrapper: {
     flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 16,
     paddingRight: 16,
+    paddingLeft: 8,
   },
   selectText: {
     fontSize: 16,
@@ -499,8 +561,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     paddingRight: 16,
+    paddingLeft: 8,
     fontSize: 16,
     color: "#e5e5e5",
+  },
+  errorText: {
+    color: "#f44336",
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 16,
   },
   helperText: {
     fontSize: 12,
@@ -522,6 +591,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 8,
     maxHeight: 200,
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
   },
   option: {
     padding: 16,
@@ -556,6 +627,9 @@ const styles = StyleSheet.create({
     flex: 2,
     marginLeft: 8,
     justifyContent: "center",
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   navButtonText: {
     color: "#e5e5e5",

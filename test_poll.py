@@ -1,7 +1,7 @@
 import requests
 import json
 
-url = "http://192.168.137.142:5000/api/safety-poll"
+url = "http://localhost:5000/api/safety-poll"
 data = {
     "location": "Camp",
     "is_safe": True,

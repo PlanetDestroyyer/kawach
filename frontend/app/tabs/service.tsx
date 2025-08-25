@@ -46,14 +46,6 @@ export default function ServiceScreen() {
       color: "#9C27B0",
       category: "tracking",
     },
-    {
-      id: 6,
-      title: "Fake Call",
-      description: "Simulate an incoming call to escape uncomfortable situations",
-      icon: "phone",
-      color: "#3F51B5",
-      category: "tools",
-    },
   ];
 
   const handleServicePress = (service: any) => {
@@ -80,9 +72,7 @@ export default function ServiceScreen() {
       case 5:
         Alert.alert("Location Tracking", "Share your live location with trusted contacts.");
         break;
-      case 6:
-        Alert.alert("Fake Call", "Initiate a simulated incoming call for your safety.");
-        break;
+      
       default:
         Alert.alert("Service", `Access ${service.title} feature.`);
     }

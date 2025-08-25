@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIn
 import { MaterialIcons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
+import { getSafetyPolls } from "../../utils/api";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const [isLocationSharing, setIsLocationSharing] = useState(false);
@@ -10,46 +12,127 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [mapHtml, setMapHtml] = useState("");
   const [pollData, setPollData] = useState([]);
+  const [recentReports, setRecentReports] = useState([]);
+  const [expandedTips, setExpandedTips] = useState(false);
+  const router = useRouter();
 
-  const [trustedContacts] = useState([
-    { id: 1, name: "Mom", phone: "+1 234-567-8901", relation: "Mother" },
-    { id: 2, name: "Sarah", phone: "+1 234-567-8902", relation: "Best Friend" },
-  ]);
+  const [trustedContacts, setTrustedContacts] = useState([]);
+
+  // Dummy data for recent safety reports
+  const dummyReports = React.useMemo(() => [
+    { id: 1, location: "FC Road", isSafe: false, time: "2 hours ago", comment: "Reported unsafe after dark" },
+    { id: 2, location: "Koregaon Park", isSafe: true, time: "5 hours ago", comment: "Well-lit and patrolled area" },
+    { id: 3, location: "Camp", isSafe: false, time: "1 day ago", comment: "Multiple incidents reported" },
+    { id: 4, location: "Baner", isSafe: true, time: "1 day ago", comment: "Safe during daytime" },
+  ], []);
+
+  // Basic safety tips
+  const safetyTips = [
+    { id: 1, title: "Stay Alert", description: "Always be aware of your surroundings and trust your instincts." },
+    { id: 2, title: "Share Your Location", description: "Let someone know where you're going and when you expect to arrive." },
+    { id: 3, title: "Emergency Contacts", description: "Keep emergency contacts easily accessible on your phone." },
+    { id: 4, title: "Well-Lit Paths", description: "Stick to well-lit, populated areas, especially at night." },
+    { id: 5, title: "Avoid Isolation", description: "Stay in groups when possible, especially in unfamiliar areas." },
+    { id: 6, title: "Self-Defense", description: "Consider taking a self-defense class to build confidence and skills." },
+  ];
 
   useEffect(() => {
     getLocationAsync();
     fetchPollData();
+    fetchTrustedContacts();
+    // Set dummy reports
+    setRecentReports(dummyReports);
+  }, [dummyReports, fetchPollData, getLocationAsync, fetchTrustedContacts]);
+
+  const fetchTrustedContacts = React.useCallback(async () => {
+    try {
+      // When backend is properly connected, uncomment the following:
+      /*
+      const result = await getTrustedContacts();
+      if (result.success && result.data && Array.isArray(result.data.contacts)) {
+        // Transform the data to match our expected format
+        const contacts = result.data.contacts.map((contact, index) => ({
+          id: index + 1,
+          name: contact.name || "Contact",
+          phone: contact.phone || "N/A",
+          relation: contact.relation || "Contact"
+        }));
+        setTrustedContacts(contacts);
+      } else {
+        // Fallback to dummy data
+        throw new Error("Invalid contact data format");
+      }
+      */
+      
+      // For now, use dummy data that matches the emergency contact format
+      const dummyContacts = [
+        { id: 1, name: "Emergency Contact", phone: "+1 234-567-8901", relation: "Parent" },
+        { id: 2, name: "Friend", phone: "+1 234-567-8902", relation: "Best Friend" },
+      ];
+      setTrustedContacts(dummyContacts);
+    } catch (error) {
+      console.error("Error fetching trusted contacts:", error);
+      // Use dummy data if API fails
+      const dummyContacts = [
+        { id: 1, name: "Emergency Contact", phone: "+1 234-567-8901", relation: "Parent" },
+        { id: 2, name: "Friend", phone: "+1 234-567-8902", relation: "Best Friend" },
+      ];
+      setTrustedContacts(dummyContacts);
+    }
   }, []);
 
-  const fetchPollData = async () => {
+  const fetchPollData = React.useCallback(async () => {
     try {
-      // Use your machine's IP address instead of localhost
-      const response = await fetch('http://192.168.137.142:5000/api/safety-polls');
-      const result = await response.json();
+      const result = await getSafetyPolls();
       
-      if (result.success && Array.isArray(result.data)) {
-        setPollData(result.data);
-        console.log("Poll data fetched:", result.data);
+      if (result.success && result.data && Array.isArray(result.data.data)) {
+        setPollData(result.data.data);
+        console.log("Poll data fetched:", result.data.data);
         // Generate map after fetching poll data if location is already available
         if (userLocation && !loading) {
           generateMapHtml(userLocation.latitude, userLocation.longitude);
         }
+      } else if (result.status === 0 || (result.data && result.data.message && result.data.message.includes("timeout"))) {
+        // Network error or timeout
+        console.log("Network error or timeout, using dummy data");
+        loadDummyData();
       } else {
         console.error("Invalid poll data format:", result);
-        setPollData([]);
+        // Use dummy data if API fails
+        loadDummyData();
       }
     } catch (error) {
       console.error("Error fetching poll data:", error);
-      setPollData([]);
+      // Use dummy data if API fails
+      loadDummyData();
     }
-  };
+  }, [userLocation, loading, generateMapHtml, loadDummyData]);
 
-  const getLocationAsync = async () => {
+  const loadDummyData = React.useCallback(() => {
+    const dummyPollData = [
+      { _id: "1", location: "FC Road", is_safe: false, latitude: 18.5204, longitude: 73.8567, comment: "Unsafe after dark" },
+      { _id: "2", location: "Koregaon Park", is_safe: true, latitude: 18.5220, longitude: 73.8590, comment: "Well-lit area" },
+      { _id: "3", location: "Camp", is_safe: false, latitude: 18.5190, longitude: 73.8450, comment: "Multiple incidents" },
+      { _id: "4", location: "Baner", is_safe: true, latitude: 18.5250, longitude: 73.8200, comment: "Safe during day" },
+    ];
+    setPollData(dummyPollData);
+    setRecentReports(dummyReports);
+    if (userLocation && !loading) {
+      generateMapHtml(userLocation.latitude, userLocation.longitude);
+    }
+  }, [dummyReports, userLocation, loading, generateMapHtml]);
+
+  const getLocationAsync = React.useCallback(async () => {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission denied', 'Location permission is required to show your location on the map');
         setLoading(false);
+        // Use default location if permission denied
+        setUserLocation({ latitude: 18.5204, longitude: 73.8567 });
+        if (pollData.length > 0) {
+          generateMapHtml(18.5204, 73.8567);
+        }
         return;
       }
 
@@ -66,14 +149,15 @@ export default function HomeScreen() {
       console.error("Error getting location:", error);
       Alert.alert('Error', 'Could not get your current location. Using default location.');
       setLoading(false);
+      setUserLocation({ latitude: 18.5204, longitude: 73.8567 });
       // Only generate map after both location and poll data are available
       if (pollData.length > 0) {
-        generateMapHtml(18.5204, 73.8567); // Default fallback
+        generateMapHtml(18.5204, 73.8567);
       }
     }
-  };
+  }, [pollData, generateMapHtml]);
 
-  const generateMapHtml = (latitude, longitude) => {
+  const generateMapHtml = React.useCallback((latitude, longitude) => {
     const pollMarkers = pollData.map((poll, index) => `
       // Create a circle for the area
       var circle = L.circle([${poll.latitude}, ${poll.longitude}], {
@@ -160,36 +244,22 @@ export default function HomeScreen() {
     `;
     
     setMapHtml(html);
-  };
+  }, [pollData]);
 
-  const handleSendSOS = () => {
-    Alert.alert(
-      "🚨 SOS Alert Sent!",
-      "Your location has been shared with:\n• Mom (+1 234-567-8901)\n• Sarah (+1 234-567-8902)\n• Emergency Services (100)",
-      [{ text: "OK" }]
-    );
-  };
-
-  const handleFakeCall = () => {
-    Alert.alert(
-      "📞 Fake Call Initiated",
-      "Incoming call from: Mom\nThis will help you exit uncomfortable situations safely.",
-      [{ text: "OK" }]
-    );
-  };
-
-  const handleLoudSiren = () => {
-    Alert.alert(
-      "🚨 LOUD SIREN ACTIVATED!",
-      "High-volume alarm is now playing to attract attention and deter threats.",
-      [{ text: "OK" }]
-    );
-  };
+  
 
   const handleEmergencyCall = (number: string, service: string) => {
     Alert.alert(
       `📞 Calling ${service}`,
       `Dialing ${number}...\nStay calm and speak clearly about your emergency.`,
+      [{ text: "OK" }]
+    );
+  };
+
+  const handleSendMessage = (number: string, name: string) => {
+    Alert.alert(
+      `✉️ Sending Message to ${name}`,
+      `This would open your messaging app to send a text to ${number}.\n\nIn a real implementation, this would integrate with SMS APIs.`,
       [{ text: "OK" }]
     );
   };
@@ -205,24 +275,14 @@ export default function HomeScreen() {
 
   // Refresh map when poll data or user location changes
   useEffect(() => {
-    if (userLocation && !loading) {
+    if (userLocation && !loading && pollData.length > 0) {
       generateMapHtml(userLocation.latitude, userLocation.longitude);
     }
-  }, [pollData, userLocation, loading]);
+  }, [pollData, userLocation, loading, generateMapHtml]);
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* SOS Button */}
-        <View style={styles.sosButtonContainer}>
-          <TouchableOpacity onPress={handleSendSOS} style={styles.sosButton}>
-            <View style={styles.sosButtonContent}>
-              <MaterialIcons name="phone" size={24} color="#fff" />
-              <Text style={styles.sosButtonText}>SOS</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
         {/* Location Tracking */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -234,7 +294,7 @@ export default function HomeScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <MaterialIcons name="map" size={20} color="#4CAF50" />
-              <Text style={styles.cardTitle}>Community Poll Locations</Text>
+              <Text style={styles.cardTitle}>Community Safety Map</Text>
               <View style={styles.liveIndicator}>
                 <MaterialIcons name="access-time" size={16} color="#999" />
                 <Text style={styles.liveText}>Live</Text>
@@ -245,7 +305,7 @@ export default function HomeScreen() {
               {loading ? (
                 <View style={styles.mapLoading}>
                   <ActivityIndicator size="large" color="#5a3d7a" />
-                  <Text style={styles.mapLoadingText}>Getting your location...</Text>
+                  <Text style={styles.mapLoadingText}>Loading safety map...</Text>
                 </View>
               ) : (
                 <WebView
@@ -297,6 +357,42 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Recent Safety Reports */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="history" size={20} color="#FF9800" />
+            <Text style={styles.sectionTitle}>Recent Safety Reports</Text>
+          </View>
+          <Text style={styles.sectionSubtitle}>Latest community safety feedback</Text>
+
+          {recentReports.map((report) => (
+            <View 
+              key={report.id} 
+              style={[
+                styles.reportCard, 
+                report.isSafe ? styles.safeReport : styles.unsafeReport
+              ]}
+            >
+              <View style={styles.reportHeader}>
+                <Text style={styles.reportLocation}>{report.location}</Text>
+                <View style={[
+                  styles.statusBadge,
+                  report.isSafe ? styles.safeBadge : styles.unsafeBadge
+                ]}>
+                  <Text style={[
+                    styles.statusText,
+                    report.isSafe ? styles.safeText : styles.unsafeText
+                  ]}>
+                    {report.isSafe ? "Safe" : "Unsafe"}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.reportComment}>{report.comment}</Text>
+              <Text style={styles.reportTime}>{report.time}</Text>
+            </View>
+          ))}
+        </View>
+
         {/* Quick Access Dashboard */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -304,7 +400,10 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.sectionSubtitle}>Essential safety features at your fingertips</Text>
 
-          <TouchableOpacity style={styles.dashboardCard}>
+          <TouchableOpacity 
+            style={styles.dashboardCard}
+            onPress={() => router.push("/tabs/service")}
+          >
             <View style={styles.dashboardCardContent}>
               <View style={styles.iconCircle}>
                 <MaterialIcons name="people" size={32} color="#2196F3" />
@@ -316,7 +415,10 @@ export default function HomeScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.dashboardCard}>
+          <TouchableOpacity 
+            style={styles.dashboardCard}
+            onPress={() => router.push("/tabs/safety_poll")}
+          >
             <View style={styles.dashboardCardContent}>
               <View style={styles.iconCircle}>
                 <MaterialIcons name="warning" size={32} color="#FF9800" />
@@ -328,7 +430,10 @@ export default function HomeScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.dashboardCard}>
+          <TouchableOpacity 
+            style={styles.dashboardCard}
+            onPress={() => setExpandedTips(!expandedTips)}
+          >
             <View style={styles.dashboardCardContent}>
               <View style={styles.iconCircle}>
                 <MaterialIcons name="lightbulb" size={32} color="#4CAF50" />
@@ -337,8 +442,25 @@ export default function HomeScreen() {
                 <Text style={styles.dashboardTitle}>Safety Tips</Text>
                 <Text style={styles.dashboardSubtitle}>Learn self-defense and safety techniques</Text>
               </View>
+              <MaterialIcons 
+                name={expandedTips ? "expand-less" : "expand-more"} 
+                size={24} 
+                color="#a0a0a0" 
+              />
             </View>
           </TouchableOpacity>
+
+          {/* Expanded Safety Tips */}
+          {expandedTips && (
+            <View style={styles.tipsContainer}>
+              {safetyTips.map((tip) => (
+                <View key={tip.id} style={styles.tipCard}>
+                  <Text style={styles.tipTitle}>{tip.title}</Text>
+                  <Text style={styles.tipDescription}>{tip.description}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Trusted Contacts */}
@@ -366,7 +488,10 @@ export default function HomeScreen() {
                 >
                   <MaterialIcons name="phone" size={20} color="#fff" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.messageButton}>
+                <TouchableOpacity 
+                  style={styles.messageButton}
+                  onPress={() => handleSendMessage(contact.phone, contact.name)}
+                >
                   <MaterialIcons name="message" size={20} color="#2196F3" />
                 </TouchableOpacity>
               </View>
@@ -374,6 +499,8 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
+      
+
     </View>
   );
 }
@@ -388,18 +515,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 100, // Increased padding to accommodate SOS button
   },
   sosButtonContainer: {
     position: "absolute",
     bottom: 24,
-    right: 24,
+    left: "50%",
+    transform: [{ translateX: -32 }], // Center the button
     zIndex: 10,
   },
   sosButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: "#f44336",
     justifyContent: "center",
     alignItems: "center",
@@ -409,13 +537,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  sosButtonContent: {
-    alignItems: "center",
-  },
   sosButtonText: {
     color: "#fff",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "bold",
+    marginTop: 4,
   },
   section: {
     paddingHorizontal: 24,
@@ -544,6 +670,63 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: "500",
   },
+  reportCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  safeReport: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CAF50",
+  },
+  unsafeReport: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#f44336",
+  },
+  reportHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  reportLocation: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#e5e5e5",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  safeBadge: {
+    backgroundColor: "rgba(76, 175, 80, 0.2)",
+  },
+  unsafeBadge: {
+    backgroundColor: "rgba(244, 67, 54, 0.2)",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  safeText: {
+    color: "#4CAF50",
+  },
+  unsafeText: {
+    color: "#f44336",
+  },
+  reportComment: {
+    fontSize: 14,
+    color: "#a0a0a0",
+    marginBottom: 4,
+  },
+  reportTime: {
+    fontSize: 12,
+    color: "#777",
+  },
   dashboardCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 12,
@@ -555,6 +738,7 @@ const styles = StyleSheet.create({
   dashboardCardContent: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   iconCircle: {
     width: 56,
@@ -567,6 +751,31 @@ const styles = StyleSheet.create({
   },
   dashboardText: {
     flex: 1,
+    marginRight: 16,
+  },
+  tipsContainer: {
+    marginTop: 16,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  tipCard: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  tipTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#e5e5e5",
+    marginBottom: 4,
+  },
+  tipDescription: {
+    fontSize: 14,
+    color: "#a0a0a0",
+    lineHeight: 20,
   },
   dashboardTitle: {
     fontSize: 18,
