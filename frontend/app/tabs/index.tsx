@@ -27,14 +27,74 @@ export default function HomeScreen() {
     { id: 4, location: "Baner", isSafe: true, time: "1 day ago", comment: "Safe during daytime" },
   ], []);
 
-  // Basic safety tips
+  // Basic safety tips in dropdown format
   const safetyTips = [
-    { id: 1, title: "Stay Alert", description: "Always be aware of your surroundings and trust your instincts." },
-    { id: 2, title: "Share Your Location", description: "Let someone know where you're going and when you expect to arrive." },
-    { id: 3, title: "Emergency Contacts", description: "Keep emergency contacts easily accessible on your phone." },
-    { id: 4, title: "Well-Lit Paths", description: "Stick to well-lit, populated areas, especially at night." },
-    { id: 5, title: "Avoid Isolation", description: "Stay in groups when possible, especially in unfamiliar areas." },
-    { id: 6, title: "Self-Defense", description: "Consider taking a self-defense class to build confidence and skills." },
+    { 
+      id: 1, 
+      title: "Personal Safety", 
+      tips: [
+        "Trust your instincts - if something feels wrong, it probably is",
+        "Stay aware of your surroundings at all times",
+        "Avoid walking alone in dark or isolated areas",
+        "Keep your phone charged and easily accessible",
+        "Share your location with trusted contacts when going to new places"
+      ]
+    },
+    { 
+      id: 2, 
+      title: "Emergency Preparedness", 
+      tips: [
+        "Memorize important emergency contact numbers",
+        "Keep a small flashlight or personal alarm in your bag",
+        "Know the location of the nearest police station, hospital, and shelter",
+        "Have a plan for different emergency scenarios",
+        "Teach children how to call for help and provide your address"
+      ]
+    },
+    { 
+      id: 3, 
+      title: "Digital Safety", 
+      tips: [
+        "Use strong, unique passwords for all accounts",
+        "Enable two-factor authentication whenever possible",
+        "Be cautious about sharing personal information on social media",
+        "Regularly review and update privacy settings",
+        "Avoid using public Wi-Fi for sensitive transactions"
+      ]
+    },
+    { 
+      id: 4, 
+      title: "Transportation Safety", 
+      tips: [
+        "Use licensed transportation services",
+        "Share ride details with trusted contacts",
+        "Sit behind the driver in taxis when possible",
+        "Keep emergency contact information visible",
+        "Have backup transportation plans"
+      ]
+    },
+    { 
+      id: 5, 
+      title: "Home Security", 
+      tips: [
+        "Install quality locks on all doors and windows",
+        "Use motion sensor lighting around your property",
+        "Keep valuables in a safe or safety deposit box",
+        "Establish a code word with family/friends for emergency situations",
+        "Regularly check and maintain security systems"
+      ]
+    },
+    { 
+      id: 6, 
+      title: "Workplace Safety", 
+      tips: [
+        "Know your company's safety policies and procedures",
+        "Report any safety concerns to appropriate personnel",
+        "Keep emergency exits clear and well-marked",
+        "Participate in safety training and drills",
+        "Maintain good communication with colleagues about safety"
+      ]
+    }
   ];
 
   useEffect(() => {
@@ -356,17 +416,6 @@ export default function HomeScreen() {
               </Text>
             </View>
           </TouchableOpacity>
-
-          <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <MaterialIcons name="navigation" size={20} color="#2196F3" />
-              <Text style={styles.actionButtonText}>Get Directions</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <MaterialIcons name="shield" size={20} color="#2196F3" />
-              <Text style={styles.actionButtonText}>Safe Routes</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Recent Safety Reports */}
@@ -465,10 +514,15 @@ export default function HomeScreen() {
           {/* Expanded Safety Tips */}
           {expandedTips && (
             <View style={styles.tipsContainer}>
-              {safetyTips.map((tip) => (
-                <View key={tip.id} style={styles.tipCard}>
-                  <Text style={styles.tipTitle}>{tip.title}</Text>
-                  <Text style={styles.tipDescription}>{tip.description}</Text>
+              {safetyTips.map((category) => (
+                <View key={category.id} style={styles.tipCategory}>
+                  <Text style={styles.tipCategoryTitle}>{category.title}</Text>
+                  {category.tips.map((tip, index) => (
+                    <View key={index} style={styles.tipItem}>
+                      <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.tipIcon} />
+                      <Text style={styles.tipText}>{tip}</Text>
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>
@@ -773,21 +827,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2a2a2a",
   },
-  tipCard: {
-    paddingVertical: 12,
+  tipCategory: {
+    marginBottom: 16,
+  },
+  tipCategoryTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#e5e5e5",
+    marginBottom: 12,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#2a2a2a",
   },
-  tipTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#e5e5e5",
-    marginBottom: 4,
+  tipItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 6,
   },
-  tipDescription: {
+  tipIcon: {
+    marginTop: 3,
+    marginRight: 10,
+  },
+  tipText: {
     fontSize: 14,
     color: "#a0a0a0",
     lineHeight: 20,
+    flex: 1,
   },
   dashboardTitle: {
     fontSize: 18,

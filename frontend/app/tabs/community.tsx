@@ -19,8 +19,8 @@ export default function CommunityScreen() {
       setLoading(true);
       const result = await getSafetyPolls();
       
-      if (result.success && Array.isArray(result.data)) {
-        setPolls(result.data);
+      if (result.success && result.data && Array.isArray(result.data.data)) {
+        setPolls(result.data.data);
       } else {
         // Use dummy data if API fails
         const dummyData = [

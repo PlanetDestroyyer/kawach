@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 from db.init import test_connection
@@ -15,6 +15,11 @@ app = Flask(__name__)
 # Enable CORS for all routes with more permissive settings for mobile apps
 CORS(app, origins=["*"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
      allow_headers=["Content-Type", "Authorization"], supports_credentials=True)
+
+# Serve static files
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory('static', filename)
 
 # Test database connection on startup
 print("Testing database connection...")

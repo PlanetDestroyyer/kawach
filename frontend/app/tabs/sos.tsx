@@ -1,11 +1,41 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { sendSOS } from "../../utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
+import { Audio } from 'expo-av';
 
 export default function SOSScreen() {
+  const sirenSound = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    // Load the siren sound file
+    const loadSirenSound = async () => {
+      try {
+        // For development, we'll use a remote URL
+        // In production, you might want to include the sound in your app assets
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: 'http://localhost:5000/static/siren.mp3' },
+          { isLooping: true }
+        );
+        sirenSound.current = sound;
+        console.log('Siren sound loaded successfully');
+      } catch (error) {
+        console.log('Failed to load the sound', error);
+      }
+    };
+
+    loadSirenSound();
+
+    // Cleanup function
+    return () => {
+      if (sirenSound.current) {
+        sirenSound.current.unloadAsync();
+      }
+    };
+  }, []);
+
   const handleSendSOS = async () => {
     Alert.alert(
       "🚨 EMERGENCY SOS",
@@ -78,15 +108,75 @@ export default function SOSScreen() {
     Alert.alert(
       "🚨 LOUD SIREN",
       "Activating high-volume alarm...\nThis will attract attention and deter threats.",
-      [{ text: "OK" }]
+      [
+        {
+          text: "Stop Siren",
+          onPress: async () => {
+            if (sirenSound.current) {
+              await sirenSound.current.stopAsync();
+            }
+          },
+          style: "cancel"
+        },
+        {
+          text: "Activate",
+          onPress: async () => {
+            if (sirenSound.current) {
+              try {
+                await sirenSound.current.setIsLoopingAsync(true);
+                await sirenSound.current.playAsync();
+              } catch (error) {
+                console.log('Playback failed', error);
+                // If sound is not loaded, show error message
+                Alert.alert(
+                  "Siren Error",
+                  "Failed to load siren sound. Please check your internet connection.",
+                  [{ text: "OK" }]
+                );
+              }
+            } else {
+              // If sound is not loaded, show error message
+              Alert.alert(
+                "Siren Error",
+                "Failed to load siren sound. Please check your internet connection.",
+                [{ text: "OK" }]
+              );
+            }
+          }
+        }
+      ]
     );
   };
 
-  const handleSendLocation = () => {
+  const handleEmergencyCall = (number) => {
+    const serviceNames = {
+      "100": "Police",
+      "101": "Fire Department",
+      "102": "Ambulance",
+      "181": "Women's Helpline",
+      "1091": "Healthcare Services",
+      "1098": "Childline India",
+      "1030": "Senior Citizen Helpline"
+    };
+    
+    const serviceName = serviceNames[number] || "Emergency Service";
+    
     Alert.alert(
-      "📍 Send Location",
-      "Your live location has been shared with your trusted contacts.",
-      [{ text: "OK" }]
+      "📞 Calling " + serviceName,
+      "Dialing " + number + "...\nStay calm and speak clearly about your emergency.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Call", 
+          onPress: () => {
+            Alert.alert(
+              "📞 Calling...",
+              "Your phone's dialer should open with " + number + ".\nIf it doesn't, please manually dial this number.",
+              [{ text: "OK" }]
+            );
+          }
+        }
+      ]
     );
   };
 
@@ -112,23 +202,77 @@ export default function SOSScreen() {
 
         {/* Emergency Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Emergency Actions</Text>
+          <Text style={styles.sectionTitle}>Emergency Contacts</Text>
 
           <View style={styles.actionsGrid}>
-            <TouchableOpacity style={styles.actionCard} onPress={handleSendLocation}>
-              <View style={styles.actionIconContainer}>
-                <MaterialIcons name="location-on" size={32} color="#2196F3" />
-              </View>
-              <Text style={styles.actionTitle}>Send Live Location</Text>
-              <Text style={styles.actionDescription}>Share your location with emergency contacts</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity style={styles.actionCard} onPress={handleLoudSiren}>
               <View style={styles.actionIconContainer}>
                 <MaterialIcons name="volume-up" size={32} color="#FF9800" />
               </View>
               <Text style={styles.actionTitle}>Activate Siren</Text>
               <Text style={styles.actionDescription}>Sound loud alarm to attract attention</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("100")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="local-police" size={32} color="#2196F3" />
+              </View>
+              <Text style={styles.actionTitle}>Police</Text>
+              <Text style={styles.actionDescription}>100 - Emergency Police</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("102")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="local-hospital" size={32} color="#f44336" />
+              </View>
+              <Text style={styles.actionTitle}>Ambulance</Text>
+              <Text style={styles.actionDescription}>102 - Emergency Medical</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("101")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="local-fire-department" size={32} color="#FF9800" />
+              </View>
+              <Text style={styles.actionTitle}>Fire</Text>
+              <Text style={styles.actionDescription}>101 - Fire Emergency</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("181")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="support-agent" size={32} color="#4CAF50" />
+              </View>
+              <Text style={styles.actionTitle}>Women Helpline</Text>
+              <Text style={styles.actionDescription}>181 - Women's Helpline</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("1091")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="medical-services" size={32} color="#9C27B0" />
+              </View>
+              <Text style={styles.actionTitle}>Healthcare</Text>
+              <Text style={styles.actionDescription}>1091 - Healthcare Services</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("1098")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="child-care" size={32} color="#FF9800" />
+              </View>
+              <Text style={styles.actionTitle}>Child Helpline</Text>
+              <Text style={styles.actionDescription}>1098 - Childline India</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionCard} onPress={() => handleEmergencyCall("1030")}>
+              <View style={styles.actionIconContainer}>
+                <MaterialIcons name="elderly" size={32} color="#03A9F4" />
+              </View>
+              <Text style={styles.actionTitle}>Senior Citizen</Text>
+              <Text style={styles.actionDescription}>1030 - Elder Helpline</Text>
             </TouchableOpacity>
           </View>
         </View>

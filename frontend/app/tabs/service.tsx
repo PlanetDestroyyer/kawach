@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 export default function ServiceScreen() {
   const [activeSection, setActiveSection] = useState("all");
+  const router = useRouter();
 
   const services = [
     {
@@ -38,38 +40,24 @@ export default function ServiceScreen() {
       color: "#4CAF50",
       category: "tips",
     },
-    {
-      id: 5,
-      title: "Location Tracking",
-      description: "Share your live location with trusted contacts",
-      icon: "location-on",
-      color: "#9C27B0",
-      category: "tracking",
-    },
   ];
 
   const handleServicePress = (service: any) => {
     switch (service.id) {
-      case 1:
-        Alert.alert(
-          "🚨 Emergency SOS",
-          "This will send your location to all trusted contacts and emergency services.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Send SOS", onPress: () => Alert.alert("SOS Sent", "Emergency contacts notified") }
-          ]
-        );
+      case 1: // Emergency SOS
+        router.push("/tabs/sos");
         break;
-      case 2:
-        Alert.alert("Trusted Contacts", "Manage your emergency contacts here.");
+      case 2: // Trusted Contacts
+        router.push("/tabs");
         break;
-      case 3:
-        Alert.alert("Incident Reporting", "Report safety concerns with this feature.");
+      case 3: // Incident Reporting
+        router.push("/tabs/safety_poll");
         break;
-      case 4:
-        Alert.alert("Safety Tips", "Access self-defense techniques and safety advice.");
+      case 4: // Safety Tips
+        // We'll handle this in the safety tips section
+        setExpandedTips(!expandedTips);
         break;
-      case 5:
+      case 5: // Location Tracking
         Alert.alert("Location Tracking", "Share your live location with trusted contacts.");
         break;
       
@@ -144,7 +132,7 @@ export default function ServiceScreen() {
         <View style={styles.quickActionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
-            <TouchableOpacity style={styles.quickActionButton} onPress={() => Alert.alert("SOS", "Sending emergency alert...")}>
+            <TouchableOpacity style={styles.quickActionButton} onPress={() => router.push("/tabs/sos")}>
               <View style={styles.quickActionIcon}>
                 <MaterialIcons name="warning" size={24} color="#f44336" />
               </View>
@@ -156,17 +144,17 @@ export default function ServiceScreen() {
               </View>
               <Text style={styles.quickActionText}>Police (100)</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton} onPress={() => Alert.alert("Call", "Calling women's helpline...")}>
+            <TouchableOpacity style={styles.quickActionButton} onPress={() => router.push("/tabs")}>
               <View style={styles.quickActionIcon}>
-                <MaterialIcons name="support-agent" size={24} color="#4CAF50" />
+                <MaterialIcons name="people" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.quickActionText}>Helpline (1091)</Text>
+              <Text style={styles.quickActionText}>Trusted Contacts</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton} onPress={() => Alert.alert("Location", "Sharing location...")}>
+            <TouchableOpacity style={styles.quickActionButton} onPress={() => router.push("/tabs/safety_poll")}>
               <View style={styles.quickActionIcon}>
-                <MaterialIcons name="share-location" size={24} color="#9C27B0" />
+                <MaterialIcons name="report" size={24} color="#9C27B0" />
               </View>
-              <Text style={styles.quickActionText}>Share Location</Text>
+              <Text style={styles.quickActionText}>Incident Reporting</Text>
             </TouchableOpacity>
           </View>
         </View>
