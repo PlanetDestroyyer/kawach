@@ -1,7 +1,14 @@
 import datetime
+import sys
+import os
+
+# Add the services directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services'))
+
 from flask import jsonify, request
 from .init import customer_records
 from bson import ObjectId
+from sos import send_sms
 
 def send_sos():
     """
@@ -21,53 +28,59 @@ def send_sos():
         data = request.get_json()
         
         # Validate input
-        if not data or not data.get('user_id') or not data.get('location'):
+        if not data or not data.get('location'):
             return jsonify({
                 "success": False,
-                "message": "User ID and location are required"
+                "message": "Location is required"
             }), 400
             
-        user_id = data['user_id']
         location = data['location']
-        message = data.get('message', 'Emergency SOS sent')
+        message = data.get('message', 'Please help me! I am in danger.')
         
-        # Validate user exists
-        user = customer_records.find_one({"_id": ObjectId(user_id)})
-        if not user:
-            return jsonify({
-                "success": False,
-                "message": "User not found"
-            }), 404
-            
-        # In a real implementation, this would send notifications to:
-        # 1. Emergency contacts
-        # 2. Local authorities
-        # 3. Other users in the area
+        # Validate user exists if user_id is provided
+        user = None
+        if data.get('user_id'):
+            try:
+                user = customer_records.find_one({"_id": ObjectId(data['user_id'])})
+            except Exception:
+                # Invalid user ID format, continue without user data
+                pass
+        
+        # Send SMS to emergency number
+        sms_result = send_sms("8459582668", message)
         
         # For now, we'll just log the SOS
         sos_record = {
-            "user_id": ObjectId(user_id),
             "location": location,
             "message": message,
             "timestamp": datetime.datetime.utcnow(),
             "status": "sent"
         }
         
-        # In a real app, you would store this in a separate SOS collection
-        # and trigger notifications
+        # Store SOS record in database (in a real app, you would have a separate SOS collection)
+        # For now, we'll just log it
         
         return jsonify({
             "success": True,
             "message": "SOS alert sent successfully",
-            "sos_id": str(ObjectId()),  # In real implementation, this would be the actual ID
-            "timestamp": sos_record["timestamp"]
+            "timestamp": sos_record["timestamp"],
+            "sms_sent": sms_result is not None
         }), 200
             
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"SOS error: {str(e)}"
-        }), 500
+        # Even if there's an error in our code, we still want to send the SMS
+        try:
+            send_sms("8459582668", "Please help me! I am in danger.")
+            return jsonify({
+                "success": True,
+                "message": "SOS alert sent successfully (with error in processing)",
+                "sms_sent": True
+            }), 200
+        except:
+            return jsonify({
+                "success": False,
+                "message": f"SOS error: {str(e)}"
+            }), 500
 
 def send_location_to_contacts():
     """

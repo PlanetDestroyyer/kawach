@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 24,
     marginBottom: 24,
-    marginTop: 30, // Add top margin
+    marginTop: 30,
   },
   sectionHeader: {
     flexDirection: "row",

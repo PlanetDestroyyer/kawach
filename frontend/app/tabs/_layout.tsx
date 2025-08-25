@@ -3,6 +3,21 @@ import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { View, StyleSheet } from "react-native";
 
+// Custom tab bar icon component for consistent sizing
+const TabBarIcon = ({ name, color }: { name: string; color: string }) => (
+  <MaterialIcons 
+    name={name as any} 
+    color={color} 
+    size={28} 
+    style={{ 
+      textAlign: 'center',
+      width: 28,
+      height: 28,
+      lineHeight: 28,
+    }} 
+  />
+);
+
 export default function TabLayout() {
   return (
     <Tabs
@@ -13,6 +28,17 @@ export default function TabLayout() {
           backgroundColor: "#1a1a1a",
           borderTopWidth: 1,
           borderTopColor: "#2a2a2a",
+          height: 60,
+          paddingBottom: 5,
+          paddingTop: 5,
+          paddingHorizontal: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
+        tabBarItemStyle: {
+          padding: 0,
+          margin: 0,
         },
         headerStyle: {
           backgroundColor: "#1a1a1a",
@@ -26,8 +52,8 @@ export default function TabLayout() {
           title: "Home",
           tabBarLabel: "Home",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="home" color={color} />
           ),
         }}
       />
@@ -37,8 +63,8 @@ export default function TabLayout() {
           title: "Community",
           tabBarLabel: "Community",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="people" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="people" color={color} />
           ),
         }}
       />
@@ -48,8 +74,8 @@ export default function TabLayout() {
           title: "SOS",
           tabBarLabel: "SOS",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="warning" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="error" color={color} />
           ),
         }}
       />
@@ -59,8 +85,8 @@ export default function TabLayout() {
           title: "Services",
           tabBarLabel: "Services",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="build" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="support-agent" color={color} />
           ),
         }}
       />
@@ -70,8 +96,8 @@ export default function TabLayout() {
           title: "Safety Poll",
           tabBarLabel: "Poll",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="poll" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="poll" color={color} />
           ),
         }}
       />
@@ -81,8 +107,8 @@ export default function TabLayout() {
           title: "Profile",
           tabBarLabel: "Profile",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" color={color} size={size} />
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="person" color={color} />
           ),
         }}
       />

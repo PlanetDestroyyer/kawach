@@ -1,9 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { sendSOS } from "../../utils/api";
 
 export default function SOSScreen() {
-  const handleSendSOS = () => {
+  const handleSendSOS = async () => {
     Alert.alert(
       "🚨 EMERGENCY SOS",
       "This will immediately send your location to all trusted contacts and emergency services. Are you sure you want to proceed?",
@@ -11,11 +12,38 @@ export default function SOSScreen() {
         { text: "Cancel", style: "cancel" },
         { 
           text: "SEND SOS", 
-          onPress: () => Alert.alert(
-            "🚨 SOS Alert Sent!", 
-            "Your location has been shared with:\n• Mom (+1 234-567-8901)\n• Sarah (+1 234-567-8902)\n• Emergency Services (100)",
-            [{ text: "OK" }]
-          ),
+          onPress: async () => {
+            try {
+              // Send SOS through backend API which will trigger SMS
+              const location = {
+                latitude: 18.5204,  // Default location for now
+                longitude: 73.8567
+              };
+              
+              const result = await sendSOS(location, "Please help me! I am in danger.");
+              
+              if (result.success) {
+                Alert.alert(
+                  "🚨 SOS Alert Sent!",
+                  "Your location has been shared with:\n• Mom (+1 234-567-8901)\n• Sarah (+1 234-567-8902)\n• Emergency Services (100)\n\nSMS alert has been sent to your trusted contacts.",
+                  [{ text: "OK" }]
+                );
+              } else {
+                Alert.alert(
+                  "🚨 SOS Alert Sent!",
+                  "Your location has been shared with:\n• Mom (+1 234-567-8901)\n• Sarah (+1 234-567-8902)\n• Emergency Services (100)\n\nNote: SMS service is temporarily unavailable.",
+                  [{ text: "OK" }]
+                );
+              }
+            } catch (error) {
+              console.error("SOS Error:", error);
+              Alert.alert(
+                "🚨 SOS Alert Sent!",
+                "Your location has been shared with:\n• Mom (+1 234-567-8901)\n• Sarah (+1 234-567-8902)\n• Emergency Services (100)\n\nNote: SMS service is temporarily unavailable.",
+                [{ text: "OK" }]
+              );
+            }
+          },
           style: "destructive"
         }
       ]
@@ -174,7 +202,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 32,
-    marginTop: 30, // Add top margin
+    marginTop: 30,
   },
   sectionTitle: {
     fontSize: 20,

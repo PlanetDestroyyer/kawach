@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator, Linking } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
 import { getSafetyPolls } from "../../utils/api";
 import { useRouter } from "expo-router";
+import call from 'react-native-phone-call';
 
 export default function HomeScreen() {
   const [isLocationSharing, setIsLocationSharing] = useState(false);
@@ -249,19 +250,30 @@ export default function HomeScreen() {
   
 
   const handleEmergencyCall = (number: string, service: string) => {
-    Alert.alert(
-      `📞 Calling ${service}`,
-      `Dialing ${number}...\nStay calm and speak clearly about your emergency.`,
-      [{ text: "OK" }]
-    );
+    // Format the phone number by removing non-numeric characters
+    const formattedNumber = number.replace(/\D/g, '');
+    
+    const args = {
+      number: formattedNumber,
+      prompt: true,
+    };
+
+    call(args).catch(console.error);
   };
 
   const handleSendMessage = (number: string, name: string) => {
-    Alert.alert(
-      `✉️ Sending Message to ${name}`,
-      `This would open your messaging app to send a text to ${number}.\n\nIn a real implementation, this would integrate with SMS APIs.`,
-      [{ text: "OK" }]
-    );
+    // Format the phone number by removing non-numeric characters
+    const formattedNumber = number.replace(/\D/g, '');
+    
+    const smsUrl = `sms:${formattedNumber}`;
+    Linking.openURL(smsUrl).catch(err => {
+      console.error('Failed to open SMS app:', err);
+      Alert.alert(
+        "Error",
+        "Unable to open messaging app. Please try again.",
+        [{ text: "OK" }]
+      );
+    });
   };
 
   const toggleLocationSharing = () => {
@@ -546,7 +558,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 24,
     marginBottom: 24,
-    marginTop: 16,
+    marginTop: 30,
   },
   sectionHeader: {
     flexDirection: "row",

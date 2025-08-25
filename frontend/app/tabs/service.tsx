@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   servicesGrid: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-    marginTop: 30, // Add top margin
+    marginTop: 30,
   },
   serviceCard: {
     backgroundColor: "#1a1a1a",
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   quickActionsSection: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-    marginTop: 16, // Add top margin
+    marginTop: 30,
   },
   sectionTitle: {
     fontSize: 18,
