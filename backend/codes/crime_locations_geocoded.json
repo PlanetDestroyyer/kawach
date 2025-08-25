@@ -1,79 +1,37 @@
 [
   {
-    "id": "2f79f15b864eaf510e3249bcdde5909ba11f2d0604868e2913f5f2e20f449728",
-    "location_string": "Kolhapur",
-    "summary": "The clash occurred a day after police had registered an FIR against 31 identified individuals from both sides",
-    "link": "https://www.hindustantimes.com/cities/pune-news/over-200-booked-after-violence-in-kolhapur-101755971629824.html",
-    "source": "Hindustan Times Pune",
-    "timestamp": "2025-08-24T20:58:54.108924",
     "latitude": 16.6861337,
     "longitude": 74.2563454,
-    "bubble_radius": 1000
+    "location_string": "Kolhapur",
+    "full_address": "rajaram collage kolhapur, Vidyanagar, Old Pune Bengaluru Highway, Shivaji Park, Kolhapur, Karvir, Kolhapur, Maharashtra, 416004, India",
+    "timestamp": 1756078086.846763
   },
   {
-    "id": "dc1c204a6da90e9d76b570a40145c9074d618234a0c9fb22c68ec9f5e5fb75c2",
-    "location_string": "Camp",
-    "summary": "BJP spokesperson Keshav Upadhye rakes the controversy by calling out Congress leader Rahul Gandhi’s campaign against voter fraud.",
-    "link": "https://www.hindustantimes.com/cities/pune-news/bjp-accuses-former-cm-chavan-s-nephew-and-pa-of-voter-fraud-101755891028181.html",
-    "source": "Hindustan Times Pune",
-    "timestamp": "2025-08-24T20:58:54.130361",
     "latitude": 18.5216239,
     "longitude": 73.8717527,
-    "bubble_radius": 1000
+    "location_string": "Camp",
+    "full_address": "signature, Camp, Babasaheb Ambedkar Marg, Somwar Peth, Pune City, Pune, Maharashtra, 411001, India",
+    "timestamp": 1756078088.2375376
   },
   {
-    "id": "23f9a20bb8110e66300b5805be3c3b96c6f654621ae6cfd60355326612b2cd46",
-    "location_string": "Kothrud, Pimpri, Chinchwad, Balewadi",
-    "summary": "According to the Pimpri-Chinchwad police, a woman from Kothrud approached Bavdhan police on July 17 and lodged a complaint alleging that Lodha had called her to a hotel in Balewadi under the pretext of helping her husband secure a job.",
-    "link": "https://www.hindustantimes.com/cities/pune-news/pimprichinchwad-police-take-praful-lodha-into-custody-in-rape-case-101755890307962.html",
-    "source": "Hindustan Times Pune",
-    "timestamp": "2025-08-24T20:58:54.157545",
-    "latitude": null,
-    "longitude": null,
-    "bubble_radius": 1000
-  },
-  {
-    "id": "960b1a136483c5a304eecfcbd2696f0fab95322b6301626719cd5efb5adad858",
-    "location_string": "Chinchwad",
-    "summary": "",
-    "link": "https://indianexpress.com/article/cities/pune/two-illegal-bangladeshi-migrants-arrested-hotel-chinchwad-police-10195218/",
-    "source": "Indian Express Pune",
-    "timestamp": "2025-08-24T20:58:54.916523",
     "latitude": 18.6403548,
     "longitude": 73.7917128,
-    "bubble_radius": 1000
+    "location_string": "Chinchwad",
+    "full_address": "Chinchwad, Chatrapati Shivaji Maharaj Chowk Underpass, Chinchwad, Haveli, Pune, Maharashtra, 411019, India",
+    "timestamp": 1756078090.7760587
   },
   {
-    "id": "4e18d8de46abd5c51b6a8755f34aa9d5e96d884a36432aae8e4b0e1bad279ca1",
-    "location_string": "Dabholkar",
-    "summary": "",
-    "link": "https://indianexpress.com/article/cities/pune/mans-questions-cbi-dabholkar-murder-case-10187351/",
-    "source": "Indian Express Pune",
-    "timestamp": "2025-08-24T20:58:54.930077",
-    "latitude": null,
-    "longitude": null,
-    "bubble_radius": 1000
-  },
-  {
-    "id": "2240737ac63c6f17763c35b99b629eaf9b0f06b001481a58f684ae572238f610",
-    "location_string": "Bombay",
-    "summary": "The Bombay High Court has punched holes in the prosecution’s case in the sensational 2021 Ghodegaon murder trial, granting bail to Omkar Gholap after a staggering four and half years of incarceration. Justice N.R. Borkar noted that glaring contradictions in the dying declaration and the snail’s pace of trial made it impossible to justify keeping [&#8230;]",
-    "link": "https://punemirror.com/news/bombay-hc-grants-bail-to-omkar-gholap-was-implicated-in-gangsters-murder-in-2021-ghodegaon-murder-case/",
-    "source": "Pune Mirror",
-    "timestamp": "2025-08-24T20:58:55.570228",
     "latitude": 18.5477021,
     "longitude": 73.8643964,
-    "bubble_radius": 1000
+    "location_string": "Bombay",
+    "full_address": "Bombay Sappers, Khadki, Pune City, Pune, Maharashtra, India",
+    "timestamp": 1756078093.4473338
   },
   {
-    "id": "b3f96781bea1ac457cf2169976f98e11a8f52f8a65ab2861c1ff7f629bbf9c47",
-    "location_string": "Vadgaon",
-    "summary": "A 28-year-old man from Vadgaon Sheri lost more than ₹6.25 lakh in a sophisticated online job scam. The victim, Sachin Anil Shitole, has filed a complaint at the Chandanagar Police Station, and a case has been registered under the Information Technology Act. The fraud took place between June 9 and 21. According to police, Shitole [&#8230;]",
-    "link": "https://punemirror.com/city/crime/pune-man-scammed-out-of-over-%e2%82%b96-lakh-in-online-job-fraud/",
-    "source": "Pune Mirror",
-    "timestamp": "2025-08-24T20:58:55.602889",
     "latitude": 18.7425866,
     "longitude": 73.6366603,
-    "bubble_radius": 1000
+    "location_string": "Vadgaon",
+    "full_address": "Vadgaon, Mumbai - Pune Expressway (Toll Road), Wadgaon, Mawal, Pune, Maharashtra, 412106, India",
+    "timestamp": 1756078094.6589584
   }
 ]

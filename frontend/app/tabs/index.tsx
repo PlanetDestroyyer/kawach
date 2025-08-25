@@ -1,77 +1,44 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import MapView, { Marker, Circle } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
 
 export default function HomeScreen() {
   const [isLocationSharing, setIsLocationSharing] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
-  const [region, setRegion] = useState({
-    latitude: 18.5204, // Default to Pune
-    longitude: 73.8567,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
   const [loading, setLoading] = useState(true);
-  
+  const [mapHtml, setMapHtml] = useState("");
+  const [heatmapData, setHeatmapData] = useState([]);
+
   const [trustedContacts] = useState([
     { id: 1, name: "Mom", phone: "+1 234-567-8901", relation: "Mother" },
     { id: 2, name: "Sarah", phone: "+1 234-567-8902", relation: "Best Friend" },
   ]);
 
-  // Mock heatmap data for Pune
-  const heatmapData = [
-    {
-      id: 1,
-      latitude: 18.5204,
-      longitude: 73.8567,
-      weight: 0.8,
-      radius: 800,
-      location_string: "FC Road",
-      type: "crime"
-    },
-    {
-      id: 2,
-      latitude: 18.5216,
-      longitude: 73.8718,
-      weight: 0.6,
-      radius: 600,
-      location_string: "Camp",
-      type: "poll"
-    },
-    {
-      id: 3,
-      latitude: 18.6404,
-      longitude: 73.7917,
-      weight: 0.9,
-      radius: 1000,
-      location_string: "Chinchwad",
-      type: "news"
-    },
-    {
-      id: 4,
-      latitude: 18.5642,
-      longitude: 73.9077,
-      weight: 0.3,
-      radius: 400,
-      location_string: "Koregaon Park",
-      type: "poll"
-    },
-    {
-      id: 5,
-      latitude: 18.5074,
-      longitude: 73.8077,
-      weight: 0.7,
-      radius: 700,
-      location_string: "Warje",
-      type: "crime"
-    }
-  ];
-
   useEffect(() => {
     getLocationAsync();
+    fetchHeatmapData();
   }, []);
+
+  const fetchHeatmapData = async () => {
+    try {
+      // Use your machine's IP address instead of localhost
+      const response = await fetch('http://192.168.137.142:5000/api/heatmap');
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.data)) {
+        setHeatmapData(result.data);
+        console.log("Heatmap data fetched:", result.data);
+      } else {
+        console.error("Invalid heatmap data format:", result);
+        setHeatmapData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching heatmap data:", error);
+      setHeatmapData([]);
+    }
+  };
 
   const getLocationAsync = async () => {
     try {
@@ -86,18 +53,67 @@ export default function HomeScreen() {
       const { latitude, longitude } = location.coords;
       
       setUserLocation({ latitude, longitude });
-      setRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      });
       setLoading(false);
+      generateMapHtml(latitude, longitude);
     } catch (error) {
       console.error("Error getting location:", error);
       Alert.alert('Error', 'Could not get your current location. Using default location.');
       setLoading(false);
+      generateMapHtml(18.5204, 73.8567); // Default fallback
     }
+  };
+
+  const generateMapHtml = (latitude, longitude) => {
+    const heatmapCircles = heatmapData.map((point, index) => `
+      L.circle([${point.latitude}, ${point.longitude}], {
+        color: '${point.weight > 0.7 ? 'red' : point.weight > 0.4 ? 'orange' : 'green'}',
+        fillColor: '${point.weight > 0.7 ? '#f44336' : point.weight > 0.4 ? '#ff9800' : '#4caf50'}',
+        fillOpacity: 0.5,
+        radius: ${(point.radius || 500)}
+      }).addTo(map).bindPopup("${point.location || 'Location'} - ${point.type || 'incident'}");
+    `).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Leaflet Map</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <style>
+          body { margin: 0; padding: 0; }
+          #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+          // Initialize the map
+          var map = L.map('map').setView([${latitude}, ${longitude}], 13);
+          
+          // Add OpenStreetMap tiles
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(map);
+          
+          // Add user location marker if available
+          var userMarker = L.marker([${latitude}, ${longitude}]).addTo(map)
+            .bindPopup('Your Current Location')
+            .openPopup();
+          
+          // Add heatmap circles from scraped data
+          ${heatmapCircles}
+          
+          // Adjust map view to show user location
+          map.setView([${latitude}, ${longitude}], 13);
+        </script>
+      </body>
+      </html>
+    `;
+    
+    setMapHtml(html);
   };
 
   const handleSendSOS = () => {
@@ -141,12 +157,12 @@ export default function HomeScreen() {
     );
   };
 
-  // Function to determine color based on risk level
-  const getRiskColor = (weight) => {
-    if (weight > 0.7) return 'rgba(244, 67, 54, 0.6)'; // High risk - red
-    if (weight > 0.4) return 'rgba(255, 152, 0, 0.6)';  // Medium risk - orange
-    return 'rgba(76, 175, 80, 0.6)';                   // Low risk - green
-  };
+  // Refresh map when heatmap data changes
+  useEffect(() => {
+    if (userLocation && !loading) {
+      generateMapHtml(userLocation.latitude, userLocation.longitude);
+    }
+  }, [heatmapData, userLocation, loading]);
 
   return (
     <View style={styles.container}>
@@ -186,70 +202,17 @@ export default function HomeScreen() {
                   <Text style={styles.mapLoadingText}>Getting your location...</Text>
                 </View>
               ) : (
-                <MapView
+                <WebView
+                  originWhitelist={['*']}
+                  source={{ html: mapHtml }}
                   style={styles.map}
-                  region={{
-                    latitude: region.latitude,
-                    longitude: region.longitude,
-                    latitudeDelta: region.latitudeDelta,
-                    longitudeDelta: region.longitudeDelta,
-                  }}
-                  showsUserLocation={true}
-                  showsMyLocationButton={true}
-                  showsCompass={true}
-                  showsScale={true}
-                  loadingEnabled={true}
-                  loadingIndicatorColor="#5a3d7a"
-                  loadingBackgroundColor="#1a1a1a"
-                  onRegionChangeComplete={setRegion}
-                >
-                  {/* User location marker */}
-                  {userLocation && (
-                    <Marker
-                      coordinate={{
-                        latitude: userLocation.latitude,
-                        longitude: userLocation.longitude,
-                      }}
-                      title="Your Current Location"
-                      description="This is your current position"
-                    >
-                      <MaterialIcons name="person-pin-circle" size={40} color="#2196F3" />
-                    </Marker>
-                  )}
-
-                  {/* Heatmap circles for danger zones */}
-                  {heatmapData.map((point) => (
-                    <Circle
-                      key={point.id}
-                      center={{
-                        latitude: point.latitude,
-                        longitude: point.longitude,
-                      }}
-                      radius={point.radius}
-                      fillColor={getRiskColor(point.weight)}
-                      strokeColor="rgba(255, 255, 255, 0.3)"
-                      strokeWidth={1}
-                      zIndex={1}
-                    />
-                  ))}
-                </MapView>
+                  javaScriptEnabled={true}
+                  domStorageEnabled={true}
+                  scrollEnabled={false}
+                  onError={(error) => console.error("WebView error:", error)}
+                  onLoad={() => console.log("WebView loaded")}
+                />
               )}
-            </View>
-
-            {/* Legend */}
-            <View style={styles.legendContainer}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: 'red' }]} />
-                <Text style={styles.legendText}>High Risk</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: 'orange' }]} />
-                <Text style={styles.legendText}>Medium Risk</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: 'green' }]} />
-                <Text style={styles.legendText}>Low Risk</Text>
-              </View>
             </View>
 
             <View style={styles.locationInfo}>
@@ -258,7 +221,7 @@ export default function HomeScreen() {
                 <Text style={styles.locationText}>
                   {userLocation 
                     ? `Lat: ${userLocation.latitude.toFixed(6)}, Lng: ${userLocation.longitude.toFixed(6)}` 
-                    : "Location: Pune, Maharashtra"}
+                    : "Getting location..."}
                 </Text>
               </View>
             </View>
@@ -477,28 +440,6 @@ const styles = StyleSheet.create({
     color: "#a0a0a0",
     marginTop: 12,
     fontSize: 16,
-  },
-  legendContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "rgba(26, 26, 26, 0.8)",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  legendText: {
-    color: "#e5e5e5",
-    fontSize: 12,
   },
   locationInfo: {
     backgroundColor: "rgba(26, 26, 26, 0.5)",
