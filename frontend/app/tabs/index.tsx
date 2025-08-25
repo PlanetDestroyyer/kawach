@@ -9,7 +9,7 @@ export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mapHtml, setMapHtml] = useState("");
-  const [heatmapData, setHeatmapData] = useState([]);
+  const [pollData, setPollData] = useState([]);
 
   const [trustedContacts] = useState([
     { id: 1, name: "Mom", phone: "+1 234-567-8901", relation: "Mother" },
@@ -18,25 +18,29 @@ export default function HomeScreen() {
 
   useEffect(() => {
     getLocationAsync();
-    fetchHeatmapData();
+    fetchPollData();
   }, []);
 
-  const fetchHeatmapData = async () => {
+  const fetchPollData = async () => {
     try {
       // Use your machine's IP address instead of localhost
-      const response = await fetch('http://192.168.137.142:5000/api/heatmap');
+      const response = await fetch('http://192.168.137.142:5000/api/safety-polls');
       const result = await response.json();
       
       if (result.success && Array.isArray(result.data)) {
-        setHeatmapData(result.data);
-        console.log("Heatmap data fetched:", result.data);
+        setPollData(result.data);
+        console.log("Poll data fetched:", result.data);
+        // Generate map after fetching poll data if location is already available
+        if (userLocation && !loading) {
+          generateMapHtml(userLocation.latitude, userLocation.longitude);
+        }
       } else {
-        console.error("Invalid heatmap data format:", result);
-        setHeatmapData([]);
+        console.error("Invalid poll data format:", result);
+        setPollData([]);
       }
     } catch (error) {
-      console.error("Error fetching heatmap data:", error);
-      setHeatmapData([]);
+      console.error("Error fetching poll data:", error);
+      setPollData([]);
     }
   };
 
@@ -54,23 +58,43 @@ export default function HomeScreen() {
       
       setUserLocation({ latitude, longitude });
       setLoading(false);
-      generateMapHtml(latitude, longitude);
+      // Only generate map after both location and poll data are available
+      if (pollData.length > 0) {
+        generateMapHtml(latitude, longitude);
+      }
     } catch (error) {
       console.error("Error getting location:", error);
       Alert.alert('Error', 'Could not get your current location. Using default location.');
       setLoading(false);
-      generateMapHtml(18.5204, 73.8567); // Default fallback
+      // Only generate map after both location and poll data are available
+      if (pollData.length > 0) {
+        generateMapHtml(18.5204, 73.8567); // Default fallback
+      }
     }
   };
 
   const generateMapHtml = (latitude, longitude) => {
-    const heatmapCircles = heatmapData.map((point, index) => `
-      L.circle([${point.latitude}, ${point.longitude}], {
-        color: '${point.weight > 0.7 ? 'red' : point.weight > 0.4 ? 'orange' : 'green'}',
-        fillColor: '${point.weight > 0.7 ? '#f44336' : point.weight > 0.4 ? '#ff9800' : '#4caf50'}',
-        fillOpacity: 0.5,
-        radius: ${(point.radius || 500)}
-      }).addTo(map).bindPopup("${point.location || 'Location'} - ${point.type || 'incident'}");
+    const pollMarkers = pollData.map((poll, index) => `
+      // Create a circle for the area
+      var circle = L.circle([${poll.latitude}, ${poll.longitude}], {
+        color: '${poll.is_safe ? '#4CAF50' : '#f44336'}',
+        fillColor: '${poll.is_safe ? '#4CAF50' : '#f44336'}',
+        fillOpacity: 0.3,
+        radius: 500
+      }).addTo(map);
+      
+      // Create a marker with custom icon
+      var markerIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: ${poll.is_safe ? '#4CAF50' : '#f44336'}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white;">' +
+              '<i class="material-icons" style="color: white; font-size: 18px;">${poll.is_safe ? 'check' : 'warning'}</i>' +
+              '</div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+      
+      var marker = L.marker([${poll.latitude}, ${poll.longitude}], {icon: markerIcon}).addTo(map)
+        .bindPopup("<b>${poll.location || 'Poll Location'}</b><br>${poll.is_safe ? 'Reported as Safe' : 'Reported as Unsafe'}");
     `).join('');
 
     const html = `
@@ -79,11 +103,24 @@ export default function HomeScreen() {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Leaflet Map</title>
+        <title>Safety Map</title>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <style>
-          body { margin: 0; padding: 0; }
-          #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+          body { 
+            margin: 0; 
+            padding: 0; 
+          }
+          #map { 
+            position: absolute; 
+            top: 0; 
+            bottom: 0; 
+            width: 100%; 
+          }
+          .custom-marker {
+            background: transparent;
+            border: none;
+          }
         </style>
       </head>
       <body>
@@ -99,12 +136,21 @@ export default function HomeScreen() {
           }).addTo(map);
           
           // Add user location marker if available
-          var userMarker = L.marker([${latitude}, ${longitude}]).addTo(map)
-            .bindPopup('Your Current Location')
+          var userIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #2196F3; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white;">' +
+                  '<i class="material-icons" style="color: white; font-size: 20px;">person_pin_circle</i>' +
+                  '</div>',
+            iconSize: [35, 35],
+            iconAnchor: [17.5, 17.5]
+          });
+          
+          var userMarker = L.marker([${latitude}, ${longitude}], {icon: userIcon}).addTo(map)
+            .bindPopup('<b>Your Current Location</b>')
             .openPopup();
           
-          // Add heatmap circles from scraped data
-          ${heatmapCircles}
+          // Add poll markers
+          ${pollMarkers}
           
           // Adjust map view to show user location
           map.setView([${latitude}, ${longitude}], 13);
@@ -157,12 +203,12 @@ export default function HomeScreen() {
     );
   };
 
-  // Refresh map when heatmap data changes
+  // Refresh map when poll data or user location changes
   useEffect(() => {
     if (userLocation && !loading) {
       generateMapHtml(userLocation.latitude, userLocation.longitude);
     }
-  }, [heatmapData, userLocation, loading]);
+  }, [pollData, userLocation, loading]);
 
   return (
     <View style={styles.container}>
@@ -188,7 +234,7 @@ export default function HomeScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <MaterialIcons name="map" size={20} color="#4CAF50" />
-              <Text style={styles.cardTitle}>Safety Heatmap</Text>
+              <Text style={styles.cardTitle}>Community Poll Locations</Text>
               <View style={styles.liveIndicator}>
                 <MaterialIcons name="access-time" size={16} color="#999" />
                 <Text style={styles.liveText}>Live</Text>
@@ -426,6 +472,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 16,
     backgroundColor: "#2a2a2a",
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
   },
   map: {
     width: "100%",

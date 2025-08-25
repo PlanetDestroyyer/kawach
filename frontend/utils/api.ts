@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Base URL for API calls
 // For mobile apps, localhost won't work, so we use environment variables or a default IP
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.137.109:5000"; // Change this to your machine's IP
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.137.142:5000"; // Change this to your machine's IP
 
 // Generic API call function with retry logic and better error handling
 export async function apiCall(endpoint: string, options: RequestInit = {}, retries = 3) {
@@ -128,9 +128,22 @@ export async function getVerificationStatus(userId: string) {
 
 // Emergency Services API functions
 export async function sendSOS(location: any, message: string) {
+  // Get user ID from AsyncStorage
+  const userProfileString = await AsyncStorage.getItem("userProfile");
+  if (!userProfileString) {
+    return {
+      success: false,
+      status: 401,
+      data: { message: "User not authenticated" }
+    };
+  }
+  
+  const userProfile = JSON.parse(userProfileString);
+  const userId = userProfile._id;
+  
   return apiCall("/api/emergency/sos", {
     method: "POST",
-    body: JSON.stringify({ location, message }),
+    body: JSON.stringify({ user_id: userId, location, message }),
   });
 }
 
@@ -141,78 +154,80 @@ export async function sendLocationToContacts(location: any) {
   });
 }
 
+// Contacts API functions
 export async function getTrustedContacts() {
-  return apiCall("/api/contacts");
+  // Get user ID from AsyncStorage
+  const userProfileString = await AsyncStorage.getItem("userProfile");
+  if (!userProfileString) {
+    return {
+      success: false,
+      status: 401,
+      data: { message: "User not authenticated" }
+    };
+  }
+  
+  const userProfile = JSON.parse(userProfileString);
+  const userId = userProfile._id;
+  
+  return apiCall(`/api/contacts/${userId}`);
 }
 
-export async function updateTrustedContact(contactId: string, contactData: any) {
-  return apiCall(`/api/contacts/${contactId}`, {
+export async function addTrustedContact(contactData: any) {
+  // Get user ID from AsyncStorage
+  const userProfileString = await AsyncStorage.getItem("userProfile");
+  if (!userProfileString) {
+    return {
+      success: false,
+      status: 401,
+      data: { message: "User not authenticated" }
+    };
+  }
+  
+  const userProfile = JSON.parse(userProfileString);
+  const userId = userProfile._id;
+  
+  return apiCall(`/api/contacts/${userId}`, {
+    method: "POST",
+    body: JSON.stringify({ contact: contactData }),
+  });
+}
+
+export async function updateTrustedContact(contactIndex: number, contactData: any) {
+  // Get user ID from AsyncStorage
+  const userProfileString = await AsyncStorage.getItem("userProfile");
+  if (!userProfileString) {
+    return {
+      success: false,
+      status: 401,
+      data: { message: "User not authenticated" }
+    };
+  }
+  
+  const userProfile = JSON.parse(userProfileString);
+  const userId = userProfile._id;
+  
+  return apiCall(`/api/contacts/${userId}/${contactIndex}`, {
     method: "PUT",
-    body: JSON.stringify(contactData),
+    body: JSON.stringify({ contact: contactData }),
   });
 }
 
-export async function deleteTrustedContact(contactId: string) {
-  return apiCall(`/api/contacts/${contactId}`, {
+export async function deleteTrustedContact(contactIndex: number) {
+  // Get user ID from AsyncStorage
+  const userProfileString = await AsyncStorage.getItem("userProfile");
+  if (!userProfileString) {
+    return {
+      success: false,
+      status: 401,
+      data: { message: "User not authenticated" }
+    };
+  }
+  
+  const userProfile = JSON.parse(userProfileString);
+  const userId = userProfile._id;
+  
+  return apiCall(`/api/contacts/${userId}/${contactIndex}`, {
     method: "DELETE",
-  });
-}
-
-// Heatmap API functions
-export async function getHeatmapData() {
-  // For now, we'll simulate the API call since we're focusing on the frontend
-  // In a real implementation, this would connect to your backend
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Mock heatmap data for Pune
-      const mockData = [
-        {
-          latitude: 18.5204,
-          longitude: 73.8567,
-          weight: 0.8,
-          bubble_radius: 800,
-          location_string: "FC Road",
-          type: "crime"
-        },
-        {
-          latitude: 18.5216,
-          longitude: 73.8718,
-          weight: 0.6,
-          bubble_radius: 600,
-          location_string: "Camp",
-          type: "poll"
-        },
-        {
-          latitude: 18.6404,
-          longitude: 73.7917,
-          weight: 0.9,
-          bubble_radius: 1000,
-          location_string: "Chinchwad",
-          type: "news"
-        },
-        {
-          latitude: 18.5642,
-          longitude: 73.9077,
-          weight: 0.3,
-          bubble_radius: 400,
-          location_string: "Koregaon Park",
-          type: "poll"
-        },
-        {
-          latitude: 18.5074,
-          longitude: 73.8077,
-          weight: 0.7,
-          bubble_radius: 700,
-          location_string: "Warje",
-          type: "crime"
-        }
-      ];
-      
-      resolve({
-        success: true,
-        data: mockData
-      });
-    }, 1000);
   });
 }
 
@@ -248,18 +263,19 @@ export async function createCommunityPost(postData: any) {
 
 // Safety Poll API functions
 export async function submitSafetyPoll(pollData: any) {
-  // For now, we'll simulate the API call since we're focusing on the frontend
-  // In a real implementation, this would connect to your backend
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        data: {
-          message: "Safety poll submitted successfully"
-        }
-      });
-    }, 1000);
+  return apiCall("/api/safety-poll", {
+    method: "POST",
+    body: JSON.stringify(pollData),
   });
+}
+
+export async function getSafetyPolls() {
+  return apiCall("/api/safety-polls");
+}
+
+// Heatmap API functions
+export async function getHeatmapData() {
+  return apiCall("/api/heatmap");
 }
 
 // Check if user is authenticated

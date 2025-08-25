@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { submitSafetyPoll } from "../../utils/safety_poll_api";
+import { submitSafetyPoll } from "../../utils/api";
 
 export default function SafetyPollScreen() {
   const [location, setLocation] = useState("");
@@ -24,15 +24,8 @@ export default function SafetyPollScreen() {
 
     setLoading(true);
     try {
-      // In a real app, we would get the user's actual location coordinates
-      // For now, we'll use dummy coordinates for Pune
-      const latitude = 18.5204 + (Math.random() - 0.5) * 0.1;
-      const longitude = 73.8567 + (Math.random() - 0.5) * 0.1;
-
       const result = await submitSafetyPoll({
         location: location.trim(),
-        latitude,
-        longitude,
         is_safe: isSafe,
         comment: comment.trim(),
       });
@@ -67,14 +60,14 @@ export default function SafetyPollScreen() {
 
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Report Area Safety</Text>
-          <Text style={styles.formSubtitle}>Share your experience at a specific location</Text>
+          <Text style={styles.formSubtitle}>Share your experience at a specific location in Pune</Text>
 
           <View style={styles.inputGroup}>
             <View style={styles.inputContainer}>
               <MaterialIcons name="location-on" size={20} color="#a0a0a0" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Enter location (e.g., FC Road, Koregaon Park)"
+                placeholder="Enter location name (e.g., FC Road, Koregaon Park, Camp)"
                 placeholderTextColor="#a0a0a0"
                 value={location}
                 onChangeText={setLocation}

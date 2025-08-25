@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { getSafetyPolls } from "../../utils/safety_poll_api";
+import { getSafetyPolls } from "../../utils/api";
 
 export default function CommunityScreen() {
-  const [polls, setPolls] = useState([]);
+  const [polls, setPolls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function CommunityScreen() {
       setLoading(true);
       const result = await getSafetyPolls();
       
-      if (result.success) {
+      if (result.success && Array.isArray(result.data)) {
         setPolls(result.data);
       } else {
         Alert.alert("Error", "Could not load safety reports");
@@ -42,17 +42,28 @@ export default function CommunityScreen() {
     router.push("/tabs/safety_poll");
   };
 
-  const getSafetyColor = (isSafe) => {
+  const handleViewMap = () => {
+    // Navigate to the map screen
+    router.push("/tabs/map");
+  };
+
+  const getSafetyColor = (isSafe: boolean) => {
     return isSafe ? "#4CAF50" : "#f44336";
   };
 
-  const getSafetyIcon = (isSafe) => {
+  const getSafetyIcon = (isSafe: boolean) => {
     return isSafe ? "check-circle" : "error";
   };
 
-  const getSafetyText = (isSafe) => {
+  const getSafetyText = (isSafe: boolean) => {
     return isSafe ? "Safe" : "Unsafe";
   };
+
+  // Calculate statistics
+  const safePolls = polls.filter(poll => poll.is_safe);
+  const unsafePolls = polls.filter(poll => !poll.is_safe);
+  const totalPolls = polls.length;
+  const safePercentage = totalPolls > 0 ? Math.round((safePolls.length / totalPolls) * 100) : 0;
 
   return (
     <View style={styles.container}>
@@ -73,27 +84,32 @@ export default function CommunityScreen() {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <MaterialIcons name="warning" size={24} color="#f44336" />
-            <Text style={styles.statNumber}>24</Text>
-            <Text style={styles.statLabel}>Reports Today</Text>
+            <Text style={styles.statNumber}>{unsafePolls.length}</Text>
+            <Text style={styles.statLabel}>Unsafe Reports</Text>
           </View>
           <View style={styles.statCard}>
             <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
-            <Text style={styles.statNumber}>87%</Text>
+            <Text style={styles.statNumber}>{safePercentage}%</Text>
             <Text style={styles.statLabel}>Areas Safe</Text>
           </View>
           <View style={styles.statCard}>
             <MaterialIcons name="people" size={24} color="#2196F3" />
-            <Text style={styles.statNumber}>142</Text>
-            <Text style={styles.statLabel}>Active Users</Text>
+            <Text style={styles.statNumber}>{totalPolls}</Text>
+            <Text style={styles.statLabel}>Total Reports</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Safety Reports</Text>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddPoll}>
-              <MaterialIcons name="add" size={20} color="#fff" />
-            </TouchableOpacity>
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity style={styles.mapButton} onPress={handleViewMap}>
+                <MaterialIcons name="map" size={20} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.addButton} onPress={handleAddPoll}>
+                <MaterialIcons name="add" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {loading ? (
@@ -111,8 +127,8 @@ export default function CommunityScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            polls.map((poll) => (
-              <View key={poll.id} style={styles.pollCard}>
+            polls.slice(0, 10).map((poll) => (
+              <View key={poll._id} style={styles.pollCard}>
                 <View style={styles.pollHeader}>
                   <View style={styles.locationContainer}>
                     <MaterialIcons name="location-on" size={16} color="#a0a0a0" />
@@ -124,16 +140,18 @@ export default function CommunityScreen() {
                   </View>
                 </View>
                 
-                <Text style={styles.commentText}>{poll.comment}</Text>
+                {poll.comment ? (
+                  <Text style={styles.commentText}>{poll.comment}</Text>
+                ) : null}
                 
                 <View style={styles.pollStats}>
                   <View style={styles.statItem}>
                     <MaterialIcons name="thumb-up" size={16} color="#4CAF50" />
-                    <Text style={styles.statValue}>{poll.safe_votes}</Text>
+                    <Text style={styles.statValue}>{poll.safe_votes || 0}</Text>
                   </View>
                   <View style={styles.statItem}>
                     <MaterialIcons name="thumb-down" size={16} color="#f44336" />
-                    <Text style={styles.statValue}>{poll.unsafe_votes}</Text>
+                    <Text style={styles.statValue}>{poll.unsafe_votes || 0}</Text>
                   </View>
                   <View style={styles.statItem}>
                     <MaterialIcons name="access-time" size={16} color="#a0a0a0" />
@@ -232,6 +250,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#e5e5e5",
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  mapButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#2196F3",
+    justifyContent: "center",
+    alignItems: "center",
   },
   addButton: {
     width: 36,

@@ -2,6 +2,21 @@ import datetime
 from flask import jsonify, request
 from .init import poll_records
 from bson import ObjectId
+import sys
+import os
+
+# Add the codes directory to the path so we can import community_engine
+current_dir = os.path.dirname(os.path.abspath(__file__))
+codes_dir = os.path.join(current_dir, '..', 'codes')
+sys.path.append(codes_dir)
+
+try:
+    from community_engine import get_lat_lon
+except ImportError as e:
+    print(f"Error importing community_engine: {e}")
+    # Fallback function if import fails
+    def get_lat_lon(locality: str):
+        return {"error": f"Geocoding service unavailable: {str(e)}"}
 
 def submit_safety_poll():
     """
@@ -9,8 +24,6 @@ def submit_safety_poll():
     Expected JSON input:
     {
         "location": "FC Road",
-        "latitude": 18.5204,
-        "longitude": 73.8567,
         "is_safe": true,
         "comment": "Optional comment"
     }
@@ -18,34 +31,46 @@ def submit_safety_poll():
     try:
         # Get JSON data from request
         data = request.get_json()
+        print("=== DEBUG: Received data in submit_safety_poll ===")
+        print("Data:", data)
+        print("Data type:", type(data))
         
         # Validate input
-        required_fields = ['location', 'latitude', 'longitude', 'is_safe']
+        required_fields = ['location', 'is_safe']
         for field in required_fields:
             if field not in data:
+                print(f"=== DEBUG: Missing field {field} ===")
                 return jsonify({
                     "success": False,
                     "message": f"{field} is required"
                 }), 400
         
         # Validate data types
-        if not isinstance(data['latitude'], (int, float)) or not isinstance(data['longitude'], (int, float)):
-            return jsonify({
-                "success": False,
-                "message": "Latitude and longitude must be numbers"
-            }), 400
-            
         if not isinstance(data['is_safe'], bool):
+            print("=== DEBUG: is_safe is not boolean ===")
             return jsonify({
                 "success": False,
                 "message": "is_safe must be a boolean value"
             }), 400
+            
+        # Use community_engine to geocode the location
+        print("=== DEBUG: About to call get_lat_lon ===")
+        location_result = get_lat_lon(data['location'])
+        print("=== DEBUG: Geocoded result ===")
+        print("Result:", location_result)
         
-        # Prepare poll data
+        if "error" in location_result:
+            print("=== DEBUG: Geocoding error ===")
+            return jsonify({
+                "success": False,
+                "message": location_result["error"]
+            }), 400
+            
+        # Prepare poll data with geocoded coordinates
         poll_data = {
             "location": data['location'],
-            "latitude": data['latitude'],
-            "longitude": data['longitude'],
+            "latitude": location_result['latitude'],
+            "longitude": location_result['longitude'],
             "is_safe": data['is_safe'],
             "comment": data.get('comment', ''),
             "unsafe_votes": 1 if not data['is_safe'] else 0,
@@ -53,6 +78,8 @@ def submit_safety_poll():
             "created_at": datetime.datetime.utcnow(),
             "updated_at": datetime.datetime.utcnow()
         }
+        print("=== DEBUG: Prepared poll data ===")
+        print("Poll data:", poll_data)
         
         # Insert poll into database
         result = poll_records.insert_one(poll_data)
@@ -61,18 +88,22 @@ def submit_safety_poll():
             # Remove _id from response
             poll_data['_id'] = str(result.inserted_id)
             
+            print("=== DEBUG: Successfully inserted poll ===")
             return jsonify({
                 "success": True,
                 "message": "Safety poll submitted successfully",
                 "data": poll_data
             }), 201
         else:
+            print("=== DEBUG: Failed to insert poll ===")
             return jsonify({
                 "success": False,
                 "message": "Failed to submit safety poll"
             }), 500
             
     except Exception as e:
+        print("=== DEBUG: Exception in submit_safety_poll ===")
+        print("Exception:", str(e))
         return jsonify({
             "success": False,
             "message": f"Safety poll submission error: {str(e)}"
