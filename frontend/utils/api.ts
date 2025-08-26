@@ -1,14 +1,13 @@
 // Utility functions for API calls
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Base URL for API calls
-// For mobile apps, we need to use the actual IP address of the backend machine
-// In development, this should be set in the .env file
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.137.109:5000";
+import { detectBackendIP } from "./ip-detection";
 
 // Generic API call function with retry logic and better error handling
 export async function apiCall(endpoint: string, options: RequestInit = {}, retries = 3) {
   try {
+    // Detect backend IP
+    const BASE_URL = await detectBackendIP();
+    
     // Get user token from AsyncStorage
     const token = await AsyncStorage.getItem("userToken");
     

@@ -1,52 +1,35 @@
 // Connection test utility
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { detectBackendIP } from "./ip-detection";
 
 export async function findCorrectIP() {
-  // Common local IP address ranges
-  const commonIPs = [
-    "192.168.1.100",
-    "192.168.0.100",
-    "10.0.0.100",
-    "172.16.0.100"
-  ];
+  console.log("Detecting backend IP address...");
+  const backendURL = await detectBackendIP();
   
-  const port = "5000";
-  
-  for (const ip of commonIPs) {
-    try {
-      console.log(`Testing IP: ${ip}`);
-      const response = await fetch(`http://${ip}:${port}/api/test`, {
-        method: "GET",
-        timeout: 3000
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === "success") {
-          console.log(`✅ Found working IP: ${ip}`);
-          // Save to AsyncStorage
-          await AsyncStorage.setItem("EXPO_PUBLIC_API_URL", `http://${ip}:${port}`);
-          return `http://${ip}:${port}`;
-        }
-      }
-    } catch (error) {
-      console.log(`IP ${ip} not working:`, error.message);
-    }
+  if (backendURL && !backendURL.includes("0.0.0.0")) {
+    console.log(`✅ Using backend URL: ${backendURL}`);
+    return backendURL;
+  } else {
+    console.log("❌ Could not detect backend IP automatically");
+    return null;
   }
-  
-  console.log("❌ No working IP found in common ranges");
-  return null;
 }
 
 export async function testCurrentConnection() {
-  const currentURL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.100:5000";
+  const currentURL = await detectBackendIP();
   console.log(`Testing current connection: ${currentURL}`);
   
   try {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const response = await fetch(`${currentURL}/api/test`, {
       method: "GET",
-      timeout: 5000
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (response.ok) {
       const data = await response.json();
@@ -63,7 +46,7 @@ export async function testCurrentConnection() {
 }
 
 export async function getConnectionInfo() {
-  const currentURL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.100:5000";
+  const currentURL = await detectBackendIP();
   
   return {
     configuredURL: currentURL,

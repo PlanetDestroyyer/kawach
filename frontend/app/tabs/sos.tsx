@@ -5,6 +5,7 @@ import { sendSOS } from "../../utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { Audio } from 'expo-av';
+import { detectBackendIP } from "../../utils/ip-detection";
 
 export default function SOSScreen() {
   const sirenSound = useRef<Audio.Sound | null>(null);
@@ -13,10 +14,13 @@ export default function SOSScreen() {
     // Load the siren sound file
     const loadSirenSound = async () => {
       try {
+        // Detect backend IP for the siren sound
+        const backendURL = await detectBackendIP();
+        
         // For development, we'll use a remote URL
         // In production, you might want to include the sound in your app assets
         const { sound } = await Audio.Sound.createAsync(
-          { uri: 'http://localhost:5000/static/siren.mp3' },
+          { uri: `${backendURL}/static/siren.mp3` },
           { isLooping: true }
         );
         sirenSound.current = sound;

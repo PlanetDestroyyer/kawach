@@ -180,23 +180,25 @@ ifconfig
 ip addr show
 ```
 
-Look for an IP address that starts with `192.168.x.x` or `10.x.x.x`.
+Look for an IP address that starts with `192.168.x.x` or `10.x.x.x`. In your case, it's `192.168.0.102`.
 
 ### 3. Update Frontend Configuration
-In the `frontend/.env` file, make sure the URL matches your machine's IP:
-```
-EXPO_PUBLIC_API_URL=http://YOUR_ACTUAL_IP:5000
-```
+The app now includes automatic IP detection that will try to find the backend server on the local network. It will try common IP addresses like:
+- `192.168.0.102` (your current backend IP)
+- `192.168.1.100`
+- `192.168.0.100`
+- `10.0.0.100`
+- `172.16.0.100`
 
-For example:
+If automatic detection doesn't work, you can manually set the backend URL in the `frontend/.env` file:
 ```
-EXPO_PUBLIC_API_URL=http://192.168.1.15:5000
+EXPO_PUBLIC_API_URL=http://192.168.0.102:5000
 ```
 
 ### 4. Test the Connection
 You can test if the backend is accessible by opening this URL in your browser:
 ```
-http://YOUR_MACHINE_IP:5000/api/test
+http://192.168.0.102:5000/api/test
 ```
 
 You should see a response like:
@@ -234,6 +236,18 @@ You can run the connection test utility in the frontend to diagnose issues:
 1. Open the developer menu in Expo (shake device or `Ctrl+M`/`Cmd+M`)
 2. Select "Debug Remote JS"
 3. Open the browser console to see detailed logs
+
+Alternatively, you can run the backend discovery script:
+```bash
+cd frontend
+node find-backend.js
+```
+
+Or use the npm script:
+```bash
+cd frontend
+npm run find-backend
+```
 
 ## Testing
 

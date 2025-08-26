@@ -1,5 +1,6 @@
 // Test API connectivity
 import { healthCheck, testConnection } from "./api";
+import { detectBackendIP } from "./ip-detection";
 
 export async function testAPIConnection() {
   try {
@@ -25,13 +26,23 @@ export async function testAPIConnection() {
 
 // Test basic connectivity
 export async function testBasicConnectivity() {
-  const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.100:5000";
+  const BASE_URL = await detectBackendIP();
   
   try {
     console.log(`Testing basic connectivity to ${BASE_URL}...`);
     
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     // Test if we can reach the base URL
-    const response = await fetch(BASE_URL, { method: "HEAD", timeout: 5000 });
+    const response = await fetch(BASE_URL, { 
+      method: "HEAD",
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
     console.log(`Base URL response: ${response.status} ${response.statusText}`);
     
     if (response.ok) {
@@ -62,10 +73,19 @@ export async function testAuthEndpoints() {
       console.log("❌ Test endpoint not accessible");
     }
     
+    // Get backend IP for testing auth endpoints
+    const backendURL = await detectBackendIP();
+    
     // Test login endpoint availability (not actual login)
-    const loginResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.100:5000"}/api/login`, {
-      method: "OPTIONS"
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), 3000);
+    
+    const loginResponse = await fetch(`${backendURL}/api/login`, {
+      method: "OPTIONS",
+      signal: controller1.signal
     });
+    
+    clearTimeout(timeoutId1);
     
     if (loginResponse.ok) {
       console.log("✅ Login endpoint accessible");
@@ -74,9 +94,15 @@ export async function testAuthEndpoints() {
     }
     
     // Test register endpoint availability
-    const registerResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.100:5000"}/api/register`, {
-      method: "OPTIONS"
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 3000);
+    
+    const registerResponse = await fetch(`${backendURL}/api/register`, {
+      method: "OPTIONS",
+      signal: controller2.signal
     });
+    
+    clearTimeout(timeoutId2);
     
     if (registerResponse.ok) {
       console.log("✅ Register endpoint accessible");
