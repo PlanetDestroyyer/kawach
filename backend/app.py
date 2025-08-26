@@ -28,20 +28,7 @@ if test_connection():
 else:
     print("Database connection failed!")
 
-# Add a before request handler to log all requests
-@app.before_request
-def log_request_info():
-    print(f"Incoming request: {request.method} {request.url}")
-    print(f"Headers: {dict(request.headers)}")
-    if request.data:
-        print(f"Body: {request.data}")
 
-# Add an after request handler to log responses
-@app.after_request
-def log_response_info(response):
-    print(f"Response status: {response.status}")
-    print(f"Response headers: {dict(response.headers)}")
-    return response
 
 # Routes
 @app.route('/')
