@@ -1,7 +1,7 @@
-# SafeGuard Backend
+# Kawach Backend
 
 ## Overview
-This is the backend API for the SafeGuard women's safety application. It provides authentication, user management, and safety features.
+This is the backend API for the Kawach women's safety application. It provides authentication, user management, and safety features.
 
 ## Features
 - User authentication (login/register)

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "SafeGuard",
-    "slug": "SafeGuard",
+    "name": "Kawach",
+    "slug": "kawach",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "safeguard",
+    "icon": "./assets/images/logo.jpeg",
+    "scheme": "kawach",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo.jpeg",
         "backgroundColor": "#0f0f0f"
       },
       "edgeToEdgeEnabled": true,
@@ -33,14 +33,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo.jpeg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/logo.jpeg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#0f0f0f"
@@ -49,7 +49,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow SafeGuard to use your location to show safety information on the map and to share your location during emergencies."
+          "locationAlwaysAndWhenInUsePermission": "Allow Kawach to use your location to show safety information on the map and to share your location during emergencies."
         }
       ]
     ],
@@ -57,7 +57,7 @@
       "typedRoutes": true
     },
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/logo.jpeg",
       "resizeMode": "contain",
       "backgroundColor": "#0f0f0f"
     }

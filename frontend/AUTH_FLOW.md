@@ -1,7 +1,7 @@
 # Authentication Flow Documentation
 
 ## Overview
-This document describes the complete authentication flow implemented in the SafeGuard women's safety app, connecting the frontend to the backend API.
+This document describes the complete authentication flow implemented in the Kawach women's safety app, connecting the frontend to the backend API.
 
 ## Authentication Flow
 

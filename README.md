@@ -1,10 +1,10 @@
-# SafeGuard - Women Safety App
+# Kawach - Women Safety App
 
 A comprehensive women safety application with emergency features, built with a React Native frontend and Python backend.
 
 ## Overview
 
-SafeGuard is a mobile application designed to enhance personal safety for women through a variety of features including emergency SOS, location tracking, trusted contacts management, incident reporting, and community support.
+Kawach is a mobile application designed to enhance personal safety for women through a variety of features including emergency SOS, location tracking, trusted contacts management, incident reporting, and community support.
 
 ## Project Structure
 

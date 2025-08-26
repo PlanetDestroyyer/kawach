@@ -1,6 +1,6 @@
 # Authentication Flow
 
-This document describes the authentication flow implemented in the SafeGuard app.
+This document describes the authentication flow implemented in the Kawach app.
 
 ## Flow Overview
 

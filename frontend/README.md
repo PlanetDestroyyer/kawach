@@ -1,4 +1,4 @@
-# SafeGuard - Women Safety App
+# Kawach - Women Safety App
 
 ## Getting Started
 

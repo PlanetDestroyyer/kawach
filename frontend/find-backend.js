@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Script to help find the backend server on the local network
-console.log("Searching for SafeGuard backend on local network...");
+console.log("Searching for Kawach backend on local network...");
 
 // Common IP ranges for local networks
 const commonIPs = [

@@ -1,3 +1,3 @@
 import "expo-router/entry";
 
-console.log("SafeGuard App loaded successfully");
+  console.log("Kawach App loaded successfully");
